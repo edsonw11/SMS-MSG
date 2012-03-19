@@ -9,13 +9,12 @@ import sms.massivo.helper.db.bean.DailyReport;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 
 public class HistoryDAO extends Database<DailyReport> {
 
 	private String myPhoneNumber;
 
-	enum table {
+	public static enum table {
 		day("TEXT"),
 		from_phone("TEXT"),
 		to_phone("TEXT"),
@@ -66,7 +65,7 @@ public class HistoryDAO extends Database<DailyReport> {
 
 	public HistoryDAO(Context context) {
 		super(context);
-		myPhoneNumber = EnvironmentAccessor.getMyPhoneNumber(context);
+		myPhoneNumber = EnvironmentAccessor.getInstance().getMyPhoneNumber(context);
 		setTablename(table.tablename());
 		setColumns(table.columns());
 		setCreateColumns(table.createColumns());
@@ -136,10 +135,11 @@ public class HistoryDAO extends Database<DailyReport> {
 	}
 
 	public DailyReport getOrCreate(DailyReport bean) {
-		DailyReport dr = getFirst("day = ? and from_phone = ?", new String[] { bean.getDay(), bean.getFromPhone() }, null);
+		String whereClause = String.format("%s = ? and %s = ?", table.day.name(), table.from_phone.name());
+		DailyReport dr = getFirst(whereClause, new String[] { bean.getDay(), bean.getFromPhone() }, null);
 		if (dr == null) {
 			insert(bean);
-			dr = getFirst("day = ? and from_phone = ?", new String[] { bean.getDay(), bean.getFromPhone() }, null);
+			dr = getFirst(whereClause, new String[] { bean.getDay(), bean.getFromPhone() }, null);
 		}
 		return dr;
 	}

@@ -1,5 +1,8 @@
 
     <resources>
-        <item format="integer" name="defaultTotalOfMessagesToSend" type="defaultValue">300</item>
+        <item format="integer" name="totalOfMessagesToSend" type="defaultValue">300</item>
         <item format="integer" name="smsSenderNotificationId" type="notification">1</item>
+        <item type="defaultValue" name="smsIntervalBetweenMessages" format="integer">1000</item>
+        <dimen name="marginBetweenVerticalComponents">15dp</dimen>
+        <dimen name="marginDefault">5dp</dimen>
     </resources>

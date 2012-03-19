@@ -7,6 +7,9 @@ import java.util.Map;
 import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -28,9 +31,22 @@ public class EnvironmentAccessor {
 		Log.d(TAG, "Acesso ao ambiente criado");
 	}
 
-	public static String getMyPhoneNumber(Context context) {
+	public String getMyPhoneNumber(Context context) {
 		TelephonyManager tMgr = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-		return tMgr.getLine1Number();
+//		return tMgr.getLine1Number();
+		return tMgr.getSimSerialNumber();
+	}
+
+	public void playRingtone(Context context) {
+		Uri alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
+		if (alert == null) {
+			alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+		}
+		if (alert == null) {
+			alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+		}
+		Ringtone r = RingtoneManager.getRingtone(context.getApplicationContext(), alert);
+		r.play();
 	}
 
 	@SuppressWarnings("unchecked")

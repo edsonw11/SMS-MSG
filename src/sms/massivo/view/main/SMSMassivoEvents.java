@@ -34,16 +34,17 @@ public class SMSMassivoEvents implements OnClickListener {
 	private void onClickSendAll(View v) {
 		Log.i(TAG, "Acionado comando para enviar todos os SMS");
 		int totalOfMessages = smsMassivo.getTotalOfMessagesToSend();
+		int delay = smsMassivo.getDelayBetweenMessages();
 
 		SMSSenderParams params = new SMSSenderParams();
 		params.setPhone("+551160470001");
 		params.setTotalOfMessages(totalOfMessages);
-		params.setDelay(1000);
+		params.setDelay(delay);
 		
 		new SMSSender(smsMassivo).execute(params);
 		
-		Log.i(TAG, String.format("Envio de %s SMS's iniciado!", totalOfMessages));
-		Toast.makeText(smsMassivo, String.format("Envio de %s SMS's iniciado!", totalOfMessages), Toast.LENGTH_SHORT).show();
+		Log.i(TAG, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), totalOfMessages));
+		Toast.makeText(smsMassivo, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), totalOfMessages), Toast.LENGTH_SHORT).show();
 	}
 
 	private void onClickLastReport(View v) {

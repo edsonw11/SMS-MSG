@@ -29,7 +29,7 @@ public class Report extends ListActivity {
 	protected void onResume() {
 		Log.i(TAG, "Obtendo dados da base...");
 		
-		DailyReport dailyReport = historyDAO.getFirst("day desc");
+		DailyReport dailyReport = historyDAO.getFirst(String.format("%s desc", HistoryDAO.table.day.name()));
 		
 		Log.i(TAG, "Adicionando dados na lista...");
 		List<String> values = new ArrayList<String>();

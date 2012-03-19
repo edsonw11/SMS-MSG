@@ -58,10 +58,10 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 	private ProgressDialog loadProgressDialog() {
 		ProgressDialog progressDialog = new ProgressDialog(EnvironmentAccessor.getInstance().get(SMSMassivo.class));
-		progressDialog.setMessage("Enviando Mensagens");
+		progressDialog.setMessage(context.getString(R.string.progressDialogSendingSms));
 		progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 		progressDialog.setCancelable(true);
-		progressDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, "Cancelar", new DialogInterface.OnClickListener() {
+		progressDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, context.getString(R.string.cancelBtn), new DialogInterface.OnClickListener() {
 
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
@@ -78,11 +78,11 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		Log.i(TAG, "Par‰metros recebidos: " + param);
 		progressDialog.setMax(param.getTotalOfMessages());
 
-		String myPhoneNumber = EnvironmentAccessor.getMyPhoneNumber(context);
+		String myPhoneNumber = EnvironmentAccessor.getInstance().getMyPhoneNumber(context);
 		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), myPhoneNumber, param.getPhone()));
 
 		if (dailyReport.getTotalSent() > param.getTotalOfMessages()) {
-			showNotification(context, "J‡ enviou a quantidade especificada hoje. Enviados: " + dailyReport.getTotalSent());
+			showNotification(context, String.format(context.getString(R.string.progressDialogMessagesHasBeenSent), dailyReport.getTotalSent()));
 			cancel(true);
 			return null;
 		}
@@ -91,15 +91,15 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 		for (int i = dailyReport.getTotalSent(); i < param.getTotalOfMessages(); i++) {
 			if (isCancelled()) {
-				showNotification(context, String.format("Envio Cancelado. Enviou %d SMSs para %s", i, param.getPhone()));
+				showNotification(context, String.format(context.getString(R.string.notificationSmsSenderCanceled), i, param.getPhone()));
 				return null;
 			}
 
-			String message = String.format("Enviando SMS %d para %s", i + 1, param.getPhone());
+			String message = String.format(context.getString(R.string.notificationSendingSms), i + 1, param.getPhone());
 			publishProgress(new SMSSenderProgress(i, message));
 			showNotification(context, message);
 
-			String text = String.format("%1$s %2$tD %2$tR enviada via android.", i + 1, new Date());
+			String text = String.format(context.getString(R.string.smsMessagePattern), i + 1, new Date());
 			sendSMS(param, text);
 			historyDao.update(dailyReport);
 			try {
@@ -108,7 +108,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 			}
 		}
 
-		String finishMessage = String.format("Finalizado envio de %s mensagens para %s", param.getTotalOfMessages(), param.getPhone());
+		String finishMessage = String.format(context.getString(R.string.notificationSmsSentFinished), param.getTotalOfMessages(), param.getPhone());
 		publishProgress(new SMSSenderProgress(param.getTotalOfMessages(), finishMessage));
 		showNotification(context, finishMessage);
 		try {
@@ -137,6 +137,8 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		Log.i(TAG, "Fechando tela de progresso...");
 		progressDialog.dismiss();
 		progressDialog = null;
+		Log.i(TAG, "Alertando tarefa finalizada via som...");
+		EnvironmentAccessor.getInstance().playRingtone(context);
 		super.onPostExecute(result);
 		Log.i(TAG, "Tarefa finalizada");
 	}

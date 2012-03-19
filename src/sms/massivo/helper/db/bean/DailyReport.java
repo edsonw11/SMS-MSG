@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class DailyReport {
+	private static transient final String DATE_FORMAT = "yyyy-MM-dd";
 	private int canceled;
 	private String day;
 	private int delivery;
@@ -29,7 +30,7 @@ public class DailyReport {
 	}
 
 	public void day(Date dt) {
-		day = new SimpleDateFormat("yyyy-MM-dd").format(dt);
+		day = new SimpleDateFormat(DATE_FORMAT).format(dt);
 	}
 
 	public int getCanceled() {
