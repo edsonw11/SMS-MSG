@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">SMSMassivoAndroid</string>
+    <string name="totalOfSendMessages">Total de Mensagens a Enviar</string>
+    <string name="sendAllBtn">Enviar todas!!!</string>
+    <string name="messageSent">Mensagens enviadas:</string>
+    <string name="zero">0</string>
+    <string name="cancelMessageSend">Interromper envio de SMS agora!</string>
+    <string name="sendSmsServiceStarted">Envio de SMS massivo iniciado</string>
+    <string name="sendSmsServiceFinished">Envio de SMS Massivo finalizado</string>
+    <string name="lastReport">Ver Último Relatório</string>
+
+</resources>

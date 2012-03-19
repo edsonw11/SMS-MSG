@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:gravity="center_vertical" >
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"  android:paddingBottom="30dp">
+
+        <TextView
+            android:id="@+main/totalOfSendMessagesLbl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/totalOfSendMessages"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <EditText
+            android:id="@+main/totalOfSendMessagesETN"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/totalOfSendMessages"
+            android:inputType="numberDecimal" >
+
+            <requestFocus />
+        </EditText>
+
+        <Button
+            android:id="@+main/sendAllBtn"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/sendAllBtn" />
+
+        <Button
+            android:id="@+main/lastReportBtn"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/lastReport" />
+
+    </LinearLayout>
+
+</LinearLayout>

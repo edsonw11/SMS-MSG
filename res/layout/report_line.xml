@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="horizontal" >
+    
+    <ImageView
+        android:id="@+line_report/icon"
+        android:layout_width="22px"
+        android:layout_height="22px"
+        android:layout_marginLeft="4px"
+        android:layout_marginRight="10px"
+        android:layout_marginTop="4px"
+        android:src="@android:drawable/ic_input_get" >
+    </ImageView>
+
+    <TextView
+        android:id="@+line_report/label"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:text="@+line_report/label"
+        android:textSize="25px" >
+    </TextView>
+</LinearLayout>
