@@ -89,7 +89,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 		showNotification(context, context.getText(R.string.sendSmsServiceStarted).toString());
 
-		for (int i = 0; i < param.getTotalOfMessages(); i++) {
+		for (int i = dailyReport.getTotalSent(); i < param.getTotalOfMessages(); i++) {
 			if (isCancelled()) {
 				showNotification(context, String.format("Envio Cancelado. Enviou %d SMSs para %s", i, param.getPhone()));
 				return null;
@@ -101,6 +101,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 			String text = String.format("%1$s %2$tD %2$tR enviada via android.", i + 1, new Date());
 			sendSMS(param, text);
+			historyDao.update(dailyReport);
 			try {
 				Thread.sleep(param.getDelay());
 			} catch (InterruptedException e) {
@@ -213,10 +214,6 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 				switch (getResultCode()) {
 				case Activity.RESULT_OK:
 					Log.i(TAG, "SMS entregue");
-					if (context instanceof SMSMassivo) {
-						((SMSMassivo) context).incTotalOfSentMessages();
-					}
-					// Toast.makeText(getBaseContext(), "SMS delivered", Toast.LENGTH_SHORT).show();
 					dailyReport.incDelivery();
 					break;
 				case Activity.RESULT_CANCELED:
@@ -231,6 +228,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		SmsManager sms = SmsManager.getDefault();
 		try {
 			sms.sendTextMessage(param.getPhone(), null, message, sentPI, deliveredPI);
+			dailyReport.incTotalSent();
 		} catch (IllegalArgumentException e) {
 			String text = String.format("%s [destinationAddress: %s, text: %s]", param.getPhone(), message);
 			Log.e(TAG, text, e);

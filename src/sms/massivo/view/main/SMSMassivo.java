@@ -15,7 +15,6 @@ public class SMSMassivo extends Activity {
 	private Button sentAllBtn;
 	private Button lastReportBtn;
 	private EditText totalOfSendMessages;
-	private TextView sentMessages;
 
 	private SMSMassivoEvents events;
 	
@@ -69,15 +68,5 @@ public class SMSMassivo extends Activity {
 		total = Integer.parseInt(getText(R.defaultValue.defaultTotalOfMessagesToSend).toString());
 		Log.i(TAG, "N‹o foi poss’vel obter o total de mensagens. Utilizando o total de mensagens padr‹o: "+total);
 		return total;
-	}
-	
-	public void incTotalOfSentMessages(){
-		Log.d(TAG, "Total de SMS enviado incrementado no painel da tela");
-		String value = sentMessages.getText().toString();
-		if(value == null || value.length() == 0){
-			value = "0";
-		}
-		
-		sentMessages.setText(Integer.valueOf(value));
 	}
 }

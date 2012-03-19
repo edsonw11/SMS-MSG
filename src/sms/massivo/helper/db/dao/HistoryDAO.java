@@ -107,22 +107,23 @@ public class HistoryDAO extends Database<DailyReport> {
 		// onUpgrade(getWritableDatabase(), 1, 4);
 		List<DailyReport> results = new ArrayList<DailyReport>();
 		Cursor c = getReadableDatabase().query(table.tablename(), table.columns().split(", "), whereClause, whereValues, null, null, orderBy);
+		try {
+			while (c.moveToNext()) {
+				DailyReport result = new DailyReport(getColumnString(c, table.day), myPhoneNumber, getColumnString(c, table.to_phone));
+				result.setCanceled(getColumnInt(c, table.canceled));
+				result.setDelivery(getColumnInt(c, table.delivery));
+				result.setGenericFailure(getColumnInt(c, table.generic_failure));
+				result.setNoService(getColumnInt(c, table.no_service));
+				result.setNullPDU(getColumnInt(c, table.null_pdu));
+				result.setRadioOff(getColumnInt(c, table.radio_off));
+				result.setSendSuccessfully(getColumnInt(c, table.send_successfully));
+				result.setTotalSent(getColumnInt(c, table.total_sent));
 
-		while (c.moveToNext()) {
-			DailyReport result = new DailyReport(getColumnString(c, table.day), myPhoneNumber, getColumnString(c, table.to_phone));
-			result.setCanceled(getColumnInt(c, table.canceled));
-			result.setDelivery(getColumnInt(c, table.delivery));
-			result.setGenericFailure(getColumnInt(c, table.generic_failure));
-			result.setNoService(getColumnInt(c, table.no_service));
-			result.setNullPDU(getColumnInt(c, table.null_pdu));
-			result.setRadioOff(getColumnInt(c, table.radio_off));
-			result.setSendSuccessfully(getColumnInt(c, table.send_successfully));
-			result.setTotalSent(getColumnInt(c, table.total_sent));
-
-			results.add(result);
+				results.add(result);
+			}
+		} finally {
+			c.close();
 		}
-		c.close();
-
 		return results;
 	}
 

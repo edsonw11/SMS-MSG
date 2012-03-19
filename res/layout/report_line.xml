@@ -19,6 +19,6 @@
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="@+line_report/label"
-        android:textSize="25px" >
+        android:textSize="20px" >
     </TextView>
 </LinearLayout>

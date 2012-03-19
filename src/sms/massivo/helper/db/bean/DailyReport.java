@@ -77,37 +77,30 @@ public class DailyReport {
 	}
 
 	public void incCanceled() {
-		this.totalSent++;
 		this.canceled++;
 	}
 
 	public void incDelivery() {
-		this.totalSent++;
 		this.delivery++;
 	}
 
 	public void incGenericFailure() {
-		this.totalSent++;
 		this.genericFailure++;
 	}
 
 	public void incNoService() {
-		this.totalSent++;
 		this.noService++;
 	}
 
 	public void incNullPDU() {
-		this.totalSent++;
 		this.nullPDU++;
 	}
 
 	public void incRadioOff() {
-		this.totalSent++;
 		this.radioOff++;
 	}
 
 	public void incSendSuccessfully() {
-		this.totalSent++;
 		this.sendSuccessfully++;
 	}
 
@@ -153,5 +146,9 @@ public class DailyReport {
 
 	public void setTotalSent(int totalSent) {
 		this.totalSent = totalSent;
+	}
+
+	public void incTotalSent() {
+		this.totalSent++;
 	}
 }

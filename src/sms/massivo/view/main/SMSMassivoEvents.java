@@ -37,8 +37,8 @@ public class SMSMassivoEvents implements OnClickListener {
 
 		SMSSenderParams params = new SMSSenderParams();
 		params.setPhone("+551160470001");
-		params.setTotalOfMessages(3);
-		params.setDelay(1500);
+		params.setTotalOfMessages(totalOfMessages);
+		params.setDelay(1000);
 		
 		new SMSSender(smsMassivo).execute(params);
 		
