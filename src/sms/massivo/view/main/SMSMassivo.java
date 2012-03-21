@@ -26,10 +26,10 @@ public class SMSMassivo extends Activity {
 		events = new SMSMassivoEvents(this);
 
 		totalOfSendMessages = (EditText) findViewById(R.main.totalOfSendMessagesETN);
-		totalOfSendMessages.setText(R.defaultValue.totalOfMessagesToSend);
+		totalOfSendMessages.setHint(R.defaultValue.totalOfMessagesToSend);
 		
 		delayBetweenMessages = (EditText) findViewById(R.main.delayBetweenMessagesETN);
-		delayBetweenMessages.setText(R.defaultValue.smsIntervalBetweenMessages);
+		delayBetweenMessages.setHint(R.defaultValue.smsIntervalBetweenMessages);
 		
 		sentAllBtn = (Button) findViewById(R.main.sendAllBtn);
 		sentAllBtn.setOnClickListener(events);

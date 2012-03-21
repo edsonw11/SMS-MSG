@@ -31,7 +31,7 @@ public class EnvironmentAccessor {
 		Log.d(TAG, "Acesso ao ambiente criado");
 	}
 
-	public String getMyPhoneNumber(Context context) {
+	public String getSimCardNumber(Context context) {
 		TelephonyManager tMgr = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
 //		return tMgr.getLine1Number();
 		return tMgr.getSimSerialNumber();
@@ -47,6 +47,12 @@ public class EnvironmentAccessor {
 		}
 		Ringtone r = RingtoneManager.getRingtone(context.getApplicationContext(), alert);
 		r.play();
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		r.stop();
 	}
 
 	@SuppressWarnings("unchecked")

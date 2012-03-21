@@ -12,7 +12,7 @@ import android.widget.Toast;
 
 public class SMSMassivoEvents implements OnClickListener {
 	public final static String TAG = "SMSMassivoEvents";
-	
+
 	private final SMSMassivo smsMassivo;
 
 	public SMSMassivoEvents(SMSMassivo smsMassivo) {
@@ -28,6 +28,7 @@ public class SMSMassivoEvents implements OnClickListener {
 			break;
 		case R.main.lastReportBtn:
 			onClickLastReport(v);
+			break;
 		}
 	}
 
@@ -40,9 +41,9 @@ public class SMSMassivoEvents implements OnClickListener {
 		params.setPhone("+551160470001");
 		params.setTotalOfMessages(totalOfMessages);
 		params.setDelay(delay);
-		
+
 		new SMSSender(smsMassivo).execute(params);
-		
+
 		Log.i(TAG, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), totalOfMessages));
 		Toast.makeText(smsMassivo, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), totalOfMessages), Toast.LENGTH_SHORT).show();
 	}
@@ -53,5 +54,4 @@ public class SMSMassivoEvents implements OnClickListener {
 		Intent intent = new Intent(smsMassivo, Report.class);
 		smsMassivo.startActivity(intent);
 	}
-	
 }

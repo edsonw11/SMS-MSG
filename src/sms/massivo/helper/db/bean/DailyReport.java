@@ -8,7 +8,7 @@ public class DailyReport {
 	private int canceled;
 	private String day;
 	private int delivery;
-	private String fromPhone;
+	private String fromSim;
 	private int genericFailure;
 	private int noService;
 	private int nullPDU;
@@ -17,15 +17,15 @@ public class DailyReport {
 	private String toPhone;
 	private int totalSent;
 
-	public DailyReport(Date date, String fromPhone, String toPhone) {
+	public DailyReport(Date date, String fromSim, String toPhone) {
 		day(date);
-		this.fromPhone = fromPhone;
+		this.fromSim = fromSim;
 		this.toPhone = toPhone;
 	}
 
-	public DailyReport(String date, String fromPhone, String toPhone) {
+	public DailyReport(String date, String fromSim, String toPhone) {
 		this.day = date;
-		this.fromPhone = fromPhone;
+		this.fromSim = fromSim;
 		this.toPhone = toPhone;
 	}
 
@@ -45,8 +45,8 @@ public class DailyReport {
 		return delivery;
 	}
 
-	public String getFromPhone() {
-		return fromPhone;
+	public String getFromSim() {
+		return fromSim;
 	}
 
 	public int getGenericFailure() {
@@ -117,8 +117,8 @@ public class DailyReport {
 		this.delivery = delivery;
 	}
 
-	public void setFromPhone(String fromPhone) {
-		this.fromPhone = fromPhone;
+	public void setFromSim(String fromSim) {
+		this.fromSim = fromSim;
 	}
 
 	public void setGenericFailure(int genericFailure) {

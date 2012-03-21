@@ -11,23 +11,6 @@
         android:padding="@dimen/marginDefault" >
 
         <TextView
-            android:id="@+main/totalOfSendMessagesLbl"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/totalOfSendMessages"
-            android:textAppearance="?android:attr/textAppearanceLarge" />
-
-        <EditText
-            android:id="@+main/totalOfSendMessagesETN"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/totalOfSendMessages"
-            android:inputType="numberDecimal" >
-
-            <requestFocus />
-        </EditText>
-
-        <TextView
             android:id="@+main/delayBetweenMessagesLbl"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -39,8 +22,23 @@
             android:id="@+main/delayBetweenMessagesETN"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/delayBetweenMessages"
             android:inputType="numberDecimal" />
+
+        <TextView
+            android:id="@+main/totalOfSendMessagesLbl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/totalOfSendMessages"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <EditText
+            android:id="@+main/totalOfSendMessagesETN"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal" >
+
+            <requestFocus />
+        </EditText>
 
         <Button
             android:id="@+main/sendAllBtn"

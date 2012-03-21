@@ -38,9 +38,10 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	public SMSSender(Context context) {
 		super();
 		this.context = context;
-		historyDao = new HistoryDAO(context);
 		notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 	}
+	
+	
 
 	@Override
 	protected void onCancelled() {
@@ -52,6 +53,9 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		Log.i(TAG, "Preparando inicio do processamento de SMS...");
 		Log.d(TAG, "Carregando di‡logo de progresso...");
 		progressDialog = loadProgressDialog();
+
+		Log.d(TAG, "Abrindo conex‹o com banco de dados...");
+		historyDao = new HistoryDAO(context);
 
 		Log.d(TAG, "Prepara‹o inicial conclu’da");
 	}
@@ -78,7 +82,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		Log.i(TAG, "Par‰metros recebidos: " + param);
 		progressDialog.setMax(param.getTotalOfMessages());
 
-		String myPhoneNumber = EnvironmentAccessor.getInstance().getMyPhoneNumber(context);
+		String myPhoneNumber = EnvironmentAccessor.getInstance().getSimCardNumber(context);
 		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), myPhoneNumber, param.getPhone()));
 
 		if (dailyReport.getTotalSent() > param.getTotalOfMessages()) {
@@ -137,6 +141,8 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		Log.i(TAG, "Fechando tela de progresso...");
 		progressDialog.dismiss();
 		progressDialog = null;
+		Log.d(TAG, "Fechando conex‹o com banco de dados...");
+		historyDao.close();
 		Log.i(TAG, "Alertando tarefa finalizada via som...");
 		EnvironmentAccessor.getInstance().playRingtone(context);
 		super.onPostExecute(result);

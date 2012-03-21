@@ -12,11 +12,11 @@ import android.database.Cursor;
 
 public class HistoryDAO extends Database<DailyReport> {
 
-	private String myPhoneNumber;
+	private String mySimCardNumber;
 
 	public static enum table {
 		day("TEXT"),
-		from_phone("TEXT"),
+		from_sim("TEXT"),
 		to_phone("TEXT"),
 		send_successfully("INTEGER"),
 		generic_failure("INTEGER"),
@@ -41,7 +41,7 @@ public class HistoryDAO extends Database<DailyReport> {
 		}
 
 		public static String primaryKeys() {
-			return String.format("%s,%s", table.day.name(), table.from_phone.name());
+			return String.format("%s,%s", table.day.name(), table.from_sim.name());
 		}
 
 		public static String createColumns() {
@@ -65,7 +65,7 @@ public class HistoryDAO extends Database<DailyReport> {
 
 	public HistoryDAO(Context context) {
 		super(context);
-		myPhoneNumber = EnvironmentAccessor.getInstance().getMyPhoneNumber(context);
+		mySimCardNumber = EnvironmentAccessor.getInstance().getSimCardNumber(context);
 		setTablename(table.tablename());
 		setColumns(table.columns());
 		setCreateColumns(table.createColumns());
@@ -77,8 +77,8 @@ public class HistoryDAO extends Database<DailyReport> {
 		ContentValues values = new ContentValues();
 		if (bean.getDay() != null)
 			values.put(table.day.name(), bean.getDay());
-		if (bean.getFromPhone() != null)
-			values.put(table.from_phone.name(), bean.getFromPhone());
+		if (bean.getFromSim() != null)
+			values.put(table.from_sim.name(), bean.getFromSim());
 		if (bean.getToPhone() != null)
 			values.put(table.to_phone.name(), bean.getToPhone());
 		values.put(table.delivery.name(), bean.getDelivery());
@@ -94,21 +94,24 @@ public class HistoryDAO extends Database<DailyReport> {
 	}
 
 	public void update(DailyReport bean) {
-		update(bean, "day = ?", new String[] { bean.getDay() });
+		String whereClause = String.format("%s = ? and %s = ?", table.day.name(), table.from_sim.name());
+		update(bean, whereClause, new String[] { bean.getDay(), bean.getFromSim() });
 	}
 
 	public void delete(DailyReport bean) {
-		delete("day = ?", new String[] { bean.getDay() });
+		String whereClause = String.format("%s = ? and %s = ?", table.day.name(), table.from_sim.name());
+		delete(whereClause, new String[] { bean.getDay(), bean.getFromSim()});
 	}
 
 	@Override
 	public List<DailyReport> getAll(String whereClause, String[] whereValues, String orderBy) {
 		// onUpgrade(getWritableDatabase(), 1, 4);
 		List<DailyReport> results = new ArrayList<DailyReport>();
-		Cursor c = getReadableDatabase().query(table.tablename(), table.columns().split(", "), whereClause, whereValues, null, null, orderBy);
+		Cursor c = null;
 		try {
+			c = getReadableDatabase().query(table.tablename(), table.columns().split(", "), whereClause, whereValues, null, null, orderBy);
 			while (c.moveToNext()) {
-				DailyReport result = new DailyReport(getColumnString(c, table.day), myPhoneNumber, getColumnString(c, table.to_phone));
+				DailyReport result = new DailyReport(getColumnString(c, table.day), mySimCardNumber, getColumnString(c, table.to_phone));
 				result.setCanceled(getColumnInt(c, table.canceled));
 				result.setDelivery(getColumnInt(c, table.delivery));
 				result.setGenericFailure(getColumnInt(c, table.generic_failure));
@@ -121,7 +124,8 @@ public class HistoryDAO extends Database<DailyReport> {
 				results.add(result);
 			}
 		} finally {
-			c.close();
+			if (c != null)
+				c.close();
 		}
 		return results;
 	}
@@ -135,11 +139,11 @@ public class HistoryDAO extends Database<DailyReport> {
 	}
 
 	public DailyReport getOrCreate(DailyReport bean) {
-		String whereClause = String.format("%s = ? and %s = ?", table.day.name(), table.from_phone.name());
-		DailyReport dr = getFirst(whereClause, new String[] { bean.getDay(), bean.getFromPhone() }, null);
+		String whereClause = String.format("%s = ? and %s = ?", table.day.name(), table.from_sim.name());
+		DailyReport dr = getFirst(whereClause, new String[] { bean.getDay(), bean.getFromSim() }, null);
 		if (dr == null) {
 			insert(bean);
-			dr = getFirst(whereClause, new String[] { bean.getDay(), bean.getFromPhone() }, null);
+			dr = getFirst(whereClause, new String[] { bean.getDay(), bean.getFromSim() }, null);
 		}
 		return dr;
 	}

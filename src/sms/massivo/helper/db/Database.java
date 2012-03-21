@@ -11,7 +11,7 @@ import android.util.Log;
 public abstract class Database<T> extends SQLiteOpenHelper {
 	private static final String TAG = "Database";
 	public static final String DB_NAME = "SMSMassivo";
-	public static final int DB_VERSION = 5;
+	public static final int DB_VERSION = 6;
 	private String tablename;
 	private String createColumns;
 	private String columns;
