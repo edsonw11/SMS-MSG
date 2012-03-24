@@ -82,31 +82,45 @@ public class DailyReport {
 	}
 
 	public void incCanceled() {
-		this.canceled++;
+		synchronized (this) {
+			this.canceled++;
+		}
 	}
 
 	public void incDelivery() {
-		this.delivery++;
+		synchronized (this) {
+			this.delivery++;
+		}
 	}
 
 	public void incGenericFailure() {
-		this.genericFailure++;
+		synchronized (this) {
+			this.genericFailure++;
+		}
 	}
 
 	public void incNoService() {
-		this.noService++;
+		synchronized (this) {
+			this.noService++;
+		}
 	}
 
 	public void incNullPDU() {
-		this.nullPDU++;
+		synchronized (this) {
+			this.nullPDU++;
+		}
 	}
 
 	public void incRadioOff() {
-		this.radioOff++;
+		synchronized (this) {
+			this.radioOff++;
+		}
 	}
 
 	public void incSendSuccessfully() {
-		this.sendSuccessfully++;
+		synchronized (this) {
+			this.sendSuccessfully++;
+		}
 	}
 
 	public void setCanceled(int canceled) {

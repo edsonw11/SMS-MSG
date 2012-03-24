@@ -61,8 +61,8 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		historyDao = new HistoryDAO(context);
 
 		Log.d(TAG, "Registrando callback de envio e entrega de SMS...");
-		registerSentSMSContextListener(SENT_SMS_INTENT);
-		registerReceiverSMSContextListener(DELIVERED_SMS_INTENT);
+		registerSentSMSContextListener();
+		registerReceiverSMSContextListener();
 
 		Log.d(TAG, "Prepara‹o inicial conclu’da");
 	}
@@ -115,7 +115,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 			showNotification(context, message);
 
 			String text = String.format(context.getString(R.string.smsMessagePattern), i + 1, new Date());
-			sendSMS(param, text);
+			sendSMS(param, i, text);
 			historyDao.update(dailyReport);
 			try {
 				Thread.sleep(param.getDelay());
@@ -152,11 +152,11 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		Log.i(TAG, "Fechando tela de progresso...");
 		progressDialog.dismiss();
 		progressDialog = null;
+		Log.d(TAG, "Fechando conex‹o com banco de dados...");
+		historyDao.close();
 		Log.d(TAG, "Removendo registro de callback de envio e entrega de SMS...");
 		unregisterReceiverSMSContextListener();
 		unregisterSentSMSContextListener();
-		Log.d(TAG, "Fechando conex‹o com banco de dados...");
-		historyDao.close();
 		Log.i(TAG, "Alertando tarefa finalizada via som...");
 		EnvironmentAccessor.getInstance().playRingtone(context);
 		super.onPostExecute(result);
@@ -170,7 +170,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 		Log.i(TAG, "Associando notifica›es a aplica‹o...");
 		// The PendingIntent to launch our activity if the user selects this notification
-		PendingIntent contentIntent = PendingIntent.getActivity(context, 0, new Intent(context, SMSMassivo.class), 0);
+		PendingIntent contentIntent = PendingIntent.getActivity(context, 2, new Intent(context, SMSMassivo.class), 0);
 
 		// Set the info for the views that show in the notification panel.
 		notification.setLatestEventInfo(context, context.getText(R.string.app_name), message, contentIntent);
@@ -181,11 +181,13 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		Log.i(TAG, "Notifica›es ativadas");
 	}
 
-	private void sendSMS(final SMSSenderParams param, final String message) {
-		Log.i(TAG, String.format("Enviando SMS para %s: '%s'", param.getPhone(), message));
+	private void sendSMS(final SMSSenderParams param, final int id, final String message) {
+		Log.i(TAG, String.format("Enviando SMS %s para %s: '%s'", id, param.getPhone(), message));
 
-		PendingIntent sentPI = PendingIntent.getBroadcast(context, 0, new Intent(SENT_SMS_INTENT), PendingIntent.FLAG_ONE_SHOT);
-		PendingIntent deliveredPI = PendingIntent.getBroadcast(context, 0, new Intent(DELIVERED_SMS_INTENT), PendingIntent.FLAG_ONE_SHOT);
+		Intent sentSmsIntent = new Intent(SENT_SMS_INTENT);
+		sentSmsIntent.putExtra("id", id);
+		PendingIntent sentPI = PendingIntent.getBroadcast(context, 0, sentSmsIntent, 0);
+		PendingIntent deliveredPI = null;// PendingIntent.getBroadcast(context, 1, new Intent(DELIVERED_SMS_INTENT), 0);
 
 		SmsManager sms = SmsManager.getDefault();
 		try {
@@ -205,7 +207,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		}
 	}
 
-	private void registerReceiverSMSContextListener(String DELIVERED) {
+	private void registerReceiverSMSContextListener() {
 		if (deliveryBroadcastReceiver == null) {
 			deliveryBroadcastReceiver = new BroadcastReceiver() {
 				@Override
@@ -224,8 +226,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 				}
 			};
 		}
-
-		context.registerReceiver(deliveryBroadcastReceiver, new IntentFilter(DELIVERED));
+		context.registerReceiver(deliveryBroadcastReceiver, new IntentFilter(DELIVERED_SMS_INTENT));
 	}
 
 	private void unregisterSentSMSContextListener() {
@@ -235,8 +236,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		}
 	}
 
-	private void registerSentSMSContextListener(String SENT) {
-		// ---when the SMS has been sent---
+	private void registerSentSMSContextListener() {
 		if (sentBroadcastReceiver == null) {
 			sentBroadcastReceiver = new BroadcastReceiver() {
 				@Override
@@ -270,7 +270,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 				}
 			};
 		}
-		context.registerReceiver(sentBroadcastReceiver, new IntentFilter(SENT));
+		context.registerReceiver(sentBroadcastReceiver, new IntentFilter(SENT_SMS_INTENT));
 	}
 
 }
