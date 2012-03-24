@@ -36,9 +36,10 @@ public class SMSMassivoEvents implements OnClickListener {
 		Log.i(TAG, "Acionado comando para enviar todos os SMS");
 		int totalOfMessages = smsMassivo.getTotalOfMessagesToSend();
 		int delay = smsMassivo.getDelayBetweenMessages();
+		String phone = smsMassivo.getPhone();
 
 		SMSSenderParams params = new SMSSenderParams();
-		params.setPhone("+551160470001");
+		params.setPhone(phone);
 		params.setTotalOfMessages(totalOfMessages);
 		params.setDelay(delay);
 

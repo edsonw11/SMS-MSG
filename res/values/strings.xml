@@ -18,5 +18,6 @@
     <string name="notificationSendingSms">Enviando SMS %1$d para %2$s</string>
     <string name="smsMessagePattern">%1$s %2$tD %2$tR enviada via android.</string>
     <string name="notificationSmsSentFinished">Finalizado envio de %1$s mensagens para %2$s</string>
+    <string name="phoneToSend">SMS para</string>
 
 </resources>

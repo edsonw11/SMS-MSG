@@ -11,6 +11,21 @@
         android:padding="@dimen/marginDefault" >
 
         <TextView
+            android:id="@+main/phoneToSendLbl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/marginBetweenVerticalComponents"
+            android:text="@string/phoneToSend"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <EditText
+            android:id="@+main/phoneToSendETN"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal" />
+
+
+        <TextView
             android:id="@+main/delayBetweenMessagesLbl"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -28,6 +43,7 @@
             android:id="@+main/totalOfSendMessagesLbl"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingTop="@dimen/marginBetweenVerticalComponents"
             android:text="@string/totalOfSendMessages"
             android:textAppearance="?android:attr/textAppearanceLarge" />
 
