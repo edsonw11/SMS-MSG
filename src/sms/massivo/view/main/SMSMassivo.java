@@ -16,7 +16,6 @@ public class SMSMassivo extends Activity {
 
 	private Button sentAllBtn;
 	private EditText phoneToSend;
-	private EditText delayBetweenMessages;
 	private EditText failureTolerance;
 	private EditText totalOfSendMessages;
 	private SMSMassivoEvents events;
@@ -34,9 +33,6 @@ public class SMSMassivo extends Activity {
 		phoneToSend.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
 		phoneToSend.setEnabled(false);
 		
-		delayBetweenMessages = (EditText) findViewById(R.main.delayBetweenMessagesETN);
-		delayBetweenMessages.setHint(R.defaultValue.smsIntervalBetweenMessages);
-
 		failureTolerance = (EditText) findViewById(R.main.totalFailureToleranceETN);
 		failureTolerance.setHint(R.defaultValue.totalFailureTolerance);
 		
@@ -89,23 +85,6 @@ public class SMSMassivo extends Activity {
 		return total;
 	}
 
-	public int getDelayBetweenMessages() {
-		int interval = 0;
-		try {
-			String totalToSendTxt = delayBetweenMessages.getText().toString();
-			interval = Integer.valueOf(totalToSendTxt);
-			if (interval > 0) {
-				Log.i(TAG, "Intervalo entre as mensagens a enviar (ms): " + interval);
-				return interval;
-			}
-		} catch (Throwable t) {
-			Log.w(TAG, String.format("Erro na converção do intervalo entre mensagens a enviar [intervalo:%d ms]", interval), t);
-		}
-		interval = Integer.parseInt(getText(R.defaultValue.smsIntervalBetweenMessages).toString());
-		Log.i(TAG, "Não foi possível obter o intervalo entre mensagens. Utilizando o intervalo de mensagens padrão: " + interval);
-		return interval;
-	}
-	
 	public int getTotalFailureTolerance() {
 		int failureTolerance = 0;
 		try {

@@ -9,7 +9,6 @@
     <string name="sendSmsServiceStarted">Envio de SMS massivo iniciado</string>
     <string name="sendSmsServiceFinished">Envio de SMS Massivo finalizado</string>
     <string name="lastReportBtn">Ver Último Relatório</string>
-    <string name="delayBetweenMessages">Intervalo entre envios (ms)</string>
     <string name="smsMassivoEvents_log_smsSenderStarted">Envio de %s SMS\'s iniciado!</string>
     <string name="cancelBtn">Cancelar</string>
     <string name="progressDialogSendingSms">Enviando Mensagens</string>

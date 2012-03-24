@@ -25,14 +25,12 @@ public class SMSMassivoEvents implements OnClickListener, OnMenuItemClickListene
 	private void onClickSendAll() {
 		Log.i(TAG, "Acionado comando para enviar todos os SMS");
 		int totalOfMessages = smsMassivo.getTotalOfMessagesToSend();
-		int delay = smsMassivo.getDelayBetweenMessages();
 		int failureTolerance = smsMassivo.getTotalFailureTolerance();
 		String phone = smsMassivo.getPhone();
 
 		SMSSenderParams params = new SMSSenderParams();
 		params.setPhone(phone);
 		params.setTotalOfMessages(totalOfMessages);
-		params.setDelay(delay);
 		params.setFailureTolerance(failureTolerance);
 
 		new SMSSender(smsMassivo).execute(params);

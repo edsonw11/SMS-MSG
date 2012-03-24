@@ -2,6 +2,9 @@ package sms.massivo.task.sender;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import sms.massivo.R;
 import sms.massivo.helper.EnvironmentAccessor;
@@ -39,6 +42,10 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	private DailyReport dailyReport;
 	private BroadcastReceiver deliveryBroadcastReceiver;
 	private BroadcastReceiver sentBroadcastReceiver;
+	private SMSSenderParams param;
+	private int counter;
+	private Set<Integer> sentSmsBroadcastReceivedIdCache = new HashSet<Integer>();
+	private Set<Integer> receiverSmsBroadcastReceivedIdCache = new HashSet<Integer>();
 
 	public SMSSender(Context context) {
 		super();
@@ -54,6 +61,8 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	@Override
 	protected void onPreExecute() {
 		Log.i(TAG, "Preparando inicio do processamento de SMS...");
+		sentSmsBroadcastReceivedIdCache.clear();
+		receiverSmsBroadcastReceivedIdCache.clear();
 		Log.d(TAG, "Carregando di‡logo de progresso...");
 		progressDialog = loadProgressDialog();
 
@@ -85,12 +94,12 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 	@Override
 	protected Void doInBackground(SMSSenderParams... params) {
-		SMSSenderParams param = params[0];
+		param = params[0];
 		Log.i(TAG, "Par‰metros recebidos: " + param);
 		progressDialog.setMax(param.getTotalOfMessages());
 
-		String myPhoneNumber = EnvironmentAccessor.getInstance().getSimCardNumber(context);
-		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), myPhoneNumber, param.getPhone()));
+		String mySimCard = EnvironmentAccessor.getInstance().getSimCardNumber(context);
+		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), mySimCard, param.getPhone()));
 
 		if (dailyReport.getTotalSent() > param.getTotalOfMessages()) {
 			showNotification(context, String.format(context.getString(R.string.progressDialogMessagesHasBeenSent), dailyReport.getTotalSent()));
@@ -100,38 +109,44 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 		showNotification(context, context.getText(R.string.sendSmsServiceStarted).toString());
 
-		for (int i = dailyReport.getTotalSent(); i < param.getTotalOfMessages(); i++) {
-			if (isCancelled()) {
-				showNotification(context, String.format(context.getString(R.string.notificationSmsSenderCanceled), i, param.getPhone()));
-				return null;
-			}
-			if (dailyReport.getTotalOfFailures() >= param.getFailureTolerance()) {
-				showNotification(context, String.format(context.getString(R.string.notificationSmsSenderAborted), i, param.getPhone(), dailyReport.getTotalOfFailures()));
-				return null;
-			}
+		counter = dailyReport.getTotalSent();
+		sendSmsInterator();
 
-			String message = String.format(context.getString(R.string.notificationSendingSms), i + 1, param.getPhone());
-			publishProgress(new SMSSenderProgress(i, message));
-			showNotification(context, message);
-
-			String text = String.format(context.getString(R.string.smsMessagePattern), i + 1, new Date());
-			sendSMS(param, i, text);
-			historyDao.update(dailyReport);
+		while (mustSendMoreSms()) {
 			try {
-				Thread.sleep(param.getDelay());
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 			}
 		}
 
-		String finishMessage = String.format(context.getString(R.string.notificationSmsSentFinished), param.getTotalOfMessages(), param.getPhone());
-		publishProgress(new SMSSenderProgress(param.getTotalOfMessages(), finishMessage));
-		showNotification(context, finishMessage);
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-		}
-
 		return null;
+	}
+
+	private boolean mustSendMoreSms() {
+		boolean hasMore = counter < param.getTotalOfMessages();
+
+		if (hasMore) {
+			if (isCancelled()) {
+				showNotification(context, String.format(context.getString(R.string.notificationSmsSenderCanceled), counter, param.getPhone()));
+				return false;
+			}
+			if (dailyReport.getTotalOfFailures() >= param.getFailureTolerance()) {
+				showNotification(context, String.format(context.getString(R.string.notificationSmsSenderAborted), counter, param.getPhone(), dailyReport.getTotalOfFailures()));
+				return false;
+			}
+		}
+		return hasMore;
+	}
+
+	private boolean sendSmsInterator() {
+
+		String message = String.format(context.getString(R.string.notificationSendingSms), counter, param.getPhone());
+		publishProgress(new SMSSenderProgress(counter, message));
+		showNotification(context, message);
+
+		String text = String.format(context.getString(R.string.smsMessagePattern), counter + 1, new Date());
+		sendSMS(param, counter, text);
+		return true;
 	}
 
 	@Override
@@ -147,6 +162,14 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 	@Override
 	protected void onPostExecute(Void result) {
+		String finishMessage = String.format(context.getString(R.string.notificationSmsSentFinished), param.getTotalOfMessages(), param.getPhone());
+		publishProgress(new SMSSenderProgress(param.getTotalOfMessages(), finishMessage));
+		showNotification(context, finishMessage);
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+		}
+
 		Log.i(TAG, "Persistindo dados...");
 		historyDao.update(dailyReport);
 		Log.i(TAG, "Fechando tela de progresso...");
@@ -186,13 +209,17 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 		Intent sentSmsIntent = new Intent(SENT_SMS_INTENT);
 		sentSmsIntent.putExtra("id", id);
-		PendingIntent sentPI = PendingIntent.getBroadcast(context, 0, sentSmsIntent, 0);
-		PendingIntent deliveredPI = null;// PendingIntent.getBroadcast(context, 1, new Intent(DELIVERED_SMS_INTENT), 0);
+		PendingIntent sentPI = PendingIntent.getBroadcast(context, 0, sentSmsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		
+		Intent deliveredSmsIntent = new Intent(DELIVERED_SMS_INTENT);
+		deliveredSmsIntent.putExtra("id", id);
+		PendingIntent deliveredPI = PendingIntent.getBroadcast(context, 1, deliveredSmsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 		SmsManager sms = SmsManager.getDefault();
 		try {
 			sms.sendTextMessage(param.getPhone(), null, message, sentPI, deliveredPI);
 			dailyReport.incTotalSent();
+			historyDao.update(dailyReport);
 		} catch (IllegalArgumentException e) {
 			String text = String.format("%s [destinationAddress: %s, text: %s]", param.getPhone(), message);
 			Log.e(TAG, text, e);
@@ -212,6 +239,12 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 			deliveryBroadcastReceiver = new BroadcastReceiver() {
 				@Override
 				public void onReceive(Context context, Intent intent) {
+					int smsId = intent.getExtras().getInt("id");
+					if (receiverSmsBroadcastReceivedIdCache.contains(smsId)) {
+						return;
+					} else {
+						receiverSmsBroadcastReceivedIdCache.add(smsId);
+					}
 					switch (getResultCode()) {
 					case Activity.RESULT_OK:
 						Log.i(TAG, "SMS entregue");
@@ -240,7 +273,13 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		if (sentBroadcastReceiver == null) {
 			sentBroadcastReceiver = new BroadcastReceiver() {
 				@Override
-				public void onReceive(Context arg0, Intent arg1) {
+				public void onReceive(Context context, Intent intent) {
+					int smsId = intent.getExtras().getInt("id");
+					if (sentSmsBroadcastReceivedIdCache.contains(smsId)) {
+						return;
+					} else {
+						sentSmsBroadcastReceivedIdCache.add(smsId);
+					}
 					switch (getResultCode()) {
 					case Activity.RESULT_OK:
 						Log.i(TAG, "SMS enviado com sucesso");
@@ -266,6 +305,13 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 						Toast.makeText(context, "Radio off", Toast.LENGTH_SHORT).show();
 						dailyReport.incRadioOff();
 						break;
+					default:
+						Toast.makeText(context, "C—digo inesperado: " + getResultCode(), Toast.LENGTH_LONG);
+					}
+					historyDao.update(dailyReport);
+					counter++;
+					if (mustSendMoreSms()) {
+						sendSmsInterator();
 					}
 				}
 			};
