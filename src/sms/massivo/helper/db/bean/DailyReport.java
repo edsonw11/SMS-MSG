@@ -29,6 +29,10 @@ public class DailyReport {
 		this.toPhone = toPhone;
 	}
 
+	public int getTotalOfFailures() {
+		return genericFailure + noService + nullPDU + radioOff;
+	}
+
 	public void day(Date dt) {
 		day = new SimpleDateFormat(DATE_FORMAT).format(dt);
 	}

@@ -27,6 +27,9 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	public static final String TAG = "SMSSender";
 	public static final String TOTAL_OF_SMS = "totalOfSMS";
 	public static final String PHONE = "phone";
+	private static final String SENT_SMS_INTENT = "SMS_SENT";
+	private static final String DELIVERED_SMS_INTENT = "SMS_DELIVERED";
+
 	private int NOTIFICATION = R.notification.smsSenderNotificationId;
 
 	private NotificationManager notificationManager;
@@ -34,14 +37,14 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	private final Context context;
 	private HistoryDAO historyDao;
 	private DailyReport dailyReport;
+	private BroadcastReceiver deliveryBroadcastReceiver;
+	private BroadcastReceiver sentBroadcastReceiver;
 
 	public SMSSender(Context context) {
 		super();
 		this.context = context;
 		notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 	}
-	
-	
 
 	@Override
 	protected void onCancelled() {
@@ -56,6 +59,10 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 		Log.d(TAG, "Abrindo conex‹o com banco de dados...");
 		historyDao = new HistoryDAO(context);
+
+		Log.d(TAG, "Registrando callback de envio e entrega de SMS...");
+		registerSentSMSContextListener(SENT_SMS_INTENT);
+		registerReceiverSMSContextListener(DELIVERED_SMS_INTENT);
 
 		Log.d(TAG, "Prepara‹o inicial conclu’da");
 	}
@@ -96,6 +103,10 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		for (int i = dailyReport.getTotalSent(); i < param.getTotalOfMessages(); i++) {
 			if (isCancelled()) {
 				showNotification(context, String.format(context.getString(R.string.notificationSmsSenderCanceled), i, param.getPhone()));
+				return null;
+			}
+			if (dailyReport.getTotalOfFailures() >= param.getFailureTolerance()) {
+				showNotification(context, String.format(context.getString(R.string.notificationSmsSenderAborted), i, param.getPhone(), dailyReport.getTotalOfFailures()));
 				return null;
 			}
 
@@ -141,6 +152,9 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		Log.i(TAG, "Fechando tela de progresso...");
 		progressDialog.dismiss();
 		progressDialog = null;
+		Log.d(TAG, "Removendo registro de callback de envio e entrega de SMS...");
+		unregisterReceiverSMSContextListener();
+		unregisterSentSMSContextListener();
 		Log.d(TAG, "Fechando conex‹o com banco de dados...");
 		historyDao.close();
 		Log.i(TAG, "Alertando tarefa finalizada via som...");
@@ -170,68 +184,8 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	private void sendSMS(final SMSSenderParams param, final String message) {
 		Log.i(TAG, String.format("Enviando SMS para %s: '%s'", param.getPhone(), message));
 
-		String SENT = "SMS_SENT";
-		String DELIVERED = "SMS_DELIVERED";
-
-		PendingIntent sentPI = PendingIntent.getBroadcast(context, 0, new Intent(SENT), 0);
-		PendingIntent deliveredPI = PendingIntent.getBroadcast(context, 0, new Intent(DELIVERED), 0);
-
-		// ---when the SMS has been sent---
-		context.registerReceiver(new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context arg0, Intent arg1) {
-				switch (getResultCode()) {
-				case Activity.RESULT_OK:
-					// ContentValues values = new ContentValues();
-					// values.put("address", phoneNumber);
-					// values.put("body", message);
-					//
-					// getContentResolver().insert(Uri.parse("content://sms/sent"), values);
-					// Toast.makeText(getBaseContext(), "SMS sent", Toast.LENGTH_SHORT).show();
-					Log.i(TAG, "SMS enviado com sucesso");
-					dailyReport.incSendSuccessfully();
-					break;
-				case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
-					Log.e(TAG, "Falha generica no envio de SMS");
-					Toast.makeText(context, "Generic failure", Toast.LENGTH_SHORT).show();
-					dailyReport.incGenericFailure();
-					break;
-				case SmsManager.RESULT_ERROR_NO_SERVICE:
-					Log.e(TAG, "Sem servio de envio de SMS");
-					Toast.makeText(context, "No service", Toast.LENGTH_SHORT).show();
-					dailyReport.incNoService();
-					break;
-				case SmsManager.RESULT_ERROR_NULL_PDU:
-					Log.e(TAG, "PDU n‹o encontrada");
-					Toast.makeText(context, "Null PDU", Toast.LENGTH_SHORT).show();
-					dailyReport.incNullPDU();
-					break;
-				case SmsManager.RESULT_ERROR_RADIO_OFF:
-					Log.e(TAG, "R‡dio desligado");
-					Toast.makeText(context, "Radio off", Toast.LENGTH_SHORT).show();
-					dailyReport.incRadioOff();
-					break;
-				}
-			}
-		}, new IntentFilter(SENT));
-
-		// ---when the SMS has been delivered---
-		context.registerReceiver(new BroadcastReceiver() {
-			@Override
-			public void onReceive(Context context, Intent intent) {
-				switch (getResultCode()) {
-				case Activity.RESULT_OK:
-					Log.i(TAG, "SMS entregue");
-					dailyReport.incDelivery();
-					break;
-				case Activity.RESULT_CANCELED:
-					Log.e(TAG, "SMS n‹o entregue");
-					Toast.makeText(context, "SMS not delivered", Toast.LENGTH_SHORT).show();
-					dailyReport.incCanceled();
-					break;
-				}
-			}
-		}, new IntentFilter(DELIVERED));
+		PendingIntent sentPI = PendingIntent.getBroadcast(context, 0, new Intent(SENT_SMS_INTENT), PendingIntent.FLAG_ONE_SHOT);
+		PendingIntent deliveredPI = PendingIntent.getBroadcast(context, 0, new Intent(DELIVERED_SMS_INTENT), PendingIntent.FLAG_ONE_SHOT);
 
 		SmsManager sms = SmsManager.getDefault();
 		try {
@@ -242,6 +196,81 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 			Log.e(TAG, text, e);
 			Toast.makeText(context, text, Toast.LENGTH_LONG).show();
 		}
+	}
+
+	private void unregisterReceiverSMSContextListener() {
+		if (deliveryBroadcastReceiver != null) {
+			context.unregisterReceiver(deliveryBroadcastReceiver);
+			deliveryBroadcastReceiver = null;
+		}
+	}
+
+	private void registerReceiverSMSContextListener(String DELIVERED) {
+		if (deliveryBroadcastReceiver == null) {
+			deliveryBroadcastReceiver = new BroadcastReceiver() {
+				@Override
+				public void onReceive(Context context, Intent intent) {
+					switch (getResultCode()) {
+					case Activity.RESULT_OK:
+						Log.i(TAG, "SMS entregue");
+						dailyReport.incDelivery();
+						break;
+					case Activity.RESULT_CANCELED:
+						Log.e(TAG, "SMS n‹o entregue");
+						Toast.makeText(context, "SMS not delivered", Toast.LENGTH_SHORT).show();
+						dailyReport.incCanceled();
+						break;
+					}
+				}
+			};
+		}
+
+		context.registerReceiver(deliveryBroadcastReceiver, new IntentFilter(DELIVERED));
+	}
+
+	private void unregisterSentSMSContextListener() {
+		if (sentBroadcastReceiver != null) {
+			context.unregisterReceiver(sentBroadcastReceiver);
+			sentBroadcastReceiver = null;
+		}
+	}
+
+	private void registerSentSMSContextListener(String SENT) {
+		// ---when the SMS has been sent---
+		if (sentBroadcastReceiver == null) {
+			sentBroadcastReceiver = new BroadcastReceiver() {
+				@Override
+				public void onReceive(Context arg0, Intent arg1) {
+					switch (getResultCode()) {
+					case Activity.RESULT_OK:
+						Log.i(TAG, "SMS enviado com sucesso");
+						dailyReport.incSendSuccessfully();
+						break;
+					case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
+						Log.e(TAG, "Falha generica no envio de SMS");
+						Toast.makeText(context, "Generic failure", Toast.LENGTH_SHORT).show();
+						dailyReport.incGenericFailure();
+						break;
+					case SmsManager.RESULT_ERROR_NO_SERVICE:
+						Log.e(TAG, "Sem servio de envio de SMS");
+						Toast.makeText(context, "No service", Toast.LENGTH_SHORT).show();
+						dailyReport.incNoService();
+						break;
+					case SmsManager.RESULT_ERROR_NULL_PDU:
+						Log.e(TAG, "PDU n‹o encontrada");
+						Toast.makeText(context, "Null PDU", Toast.LENGTH_SHORT).show();
+						dailyReport.incNullPDU();
+						break;
+					case SmsManager.RESULT_ERROR_RADIO_OFF:
+						Log.e(TAG, "R‡dio desligado");
+						Toast.makeText(context, "Radio off", Toast.LENGTH_SHORT).show();
+						dailyReport.incRadioOff();
+						break;
+					}
+				}
+			};
+		}
+		context.registerReceiver(sentBroadcastReceiver, new IntentFilter(SENT));
 	}
 
 }

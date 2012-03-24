@@ -6,8 +6,8 @@
     
     <ImageView
         android:id="@+line_report/icon"
-        android:layout_width="22px"
-        android:layout_height="22px"
+        android:layout_width="16px"
+        android:layout_height="16px"
         android:layout_marginLeft="4px"
         android:layout_marginRight="10px"
         android:layout_marginTop="4px"

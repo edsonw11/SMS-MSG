@@ -1,9 +1,16 @@
+<resources>
 
-    <resources>
-        <item format="integer" name="totalOfMessagesToSend" type="defaultValue">300</item>
-        <item format="integer" name="smsSenderNotificationId" type="notification">1</item>
-        <item type="defaultValue" name="smsIntervalBetweenMessages" format="integer">1000</item>
-        <dimen name="marginBetweenVerticalComponents">5dp</dimen>
-        <dimen name="marginDefault">5dp</dimen>
-        <item type="defaultValue" format="string" name="phoneToSend">+551160470001</item>
-    </resources>
+    <item name="smsSenderNotificationId" format="integer" type="notification">1</item>
+
+    <item name="totalOfMessagesToSend" format="integer" type="defaultValue">300</item>
+    <item name="totalFailureTolerance" format="integer" type="defaultValue">3</item>
+    <item name="smsIntervalBetweenMessages" format="integer" type="defaultValue">1000</item>
+    <item name="phoneToSend" format="string" type="defaultValue">+551160470001</item>
+    
+    <item name="sendSms" format="integer" type="menu">1</item>
+    <item name="lastReport" format="integer" type="menu">2</item>
+
+    <dimen name="marginBetweenVerticalComponents">5dp</dimen>
+    <dimen name="marginDefault">5dp</dimen>
+
+</resources>

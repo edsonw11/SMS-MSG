@@ -33,7 +33,7 @@ public class EnvironmentAccessor {
 
 	public String getSimCardNumber(Context context) {
 		TelephonyManager tMgr = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-//		return tMgr.getLine1Number();
+		// return tMgr.getLine1Number();
 		return tMgr.getSimSerialNumber();
 	}
 
@@ -46,13 +46,15 @@ public class EnvironmentAccessor {
 			alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
 		}
 		Ringtone r = RingtoneManager.getRingtone(context.getApplicationContext(), alert);
-		r.play();
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		if (r != null) {
+			r.play();
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			r.stop();
 		}
-		r.stop();
 	}
 
 	@SuppressWarnings("unchecked")

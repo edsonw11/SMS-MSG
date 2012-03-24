@@ -5,6 +5,7 @@ public class SMSSenderParams {
 	private long delay = 0;
 	private String phone;
 	private int totalOfMessages = 300;
+	private int failureTolerance = 3;
 
 	public long getDelay() {
 		return delay;
@@ -32,6 +33,14 @@ public class SMSSenderParams {
 	
 	@Override
 	public String toString() {
-		return String.format("SMSSenderParams[phone:%s, totalOfMessages:%s, delay:%s]", phone, totalOfMessages, delay);
+		return String.format("SMSSenderParams[phone:%s, totalOfMessages:%d, delay:%s, failureTolerance: %d]", phone, totalOfMessages, delay, failureTolerance);
+	}
+
+	public int getFailureTolerance() {
+		return failureTolerance;
+	}
+
+	public void setFailureTolerance(int failureTolerance) {
+		this.failureTolerance = failureTolerance;
 	}
 }

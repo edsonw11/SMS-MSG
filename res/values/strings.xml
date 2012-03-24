@@ -8,16 +8,18 @@
     <string name="cancelMessageSend">Interromper envio de SMS agora!</string>
     <string name="sendSmsServiceStarted">Envio de SMS massivo iniciado</string>
     <string name="sendSmsServiceFinished">Envio de SMS Massivo finalizado</string>
-    <string name="lastReport">Ver Último Relatório</string>
+    <string name="lastReportBtn">Ver Último Relatório</string>
     <string name="delayBetweenMessages">Intervalo entre envios (ms)</string>
     <string name="smsMassivoEvents_log_smsSenderStarted">Envio de %s SMS\'s iniciado!</string>
     <string name="cancelBtn">Cancelar</string>
     <string name="progressDialogSendingSms">Enviando Mensagens</string>
     <string name="progressDialogMessagesHasBeenSent">Já enviou a quantidade especificada hoje. Enviados: %s</string>
     <string name="notificationSmsSenderCanceled">Envio Cancelado. Enviou %1$d SMSs para %2$s</string>
+    <string name="notificationSmsSenderAborted">Envio Abortado devido a excesso de erros. Enviou %1$d SMSs para %2$s com %3$d erros</string>
     <string name="notificationSendingSms">Enviando SMS %1$d para %2$s</string>
     <string name="smsMessagePattern">%1$s %2$tD %2$tR enviada via android.</string>
     <string name="notificationSmsSentFinished">Finalizado envio de %1$s mensagens para %2$s</string>
-    <string name="phoneToSend">SMS para</string>
+    <string name="phoneToSend">Telefone de destino</string>
+    <string name="totalFailureTolerance">Tolerância a falhas</string>
 
 </resources>

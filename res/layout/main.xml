@@ -24,7 +24,6 @@
             android:layout_height="wrap_content"
             android:inputType="numberDecimal" />
 
-
         <TextView
             android:id="@+main/delayBetweenMessagesLbl"
             android:layout_width="wrap_content"
@@ -35,6 +34,20 @@
 
         <EditText
             android:id="@+main/delayBetweenMessagesETN"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:inputType="numberDecimal" />
+
+        <TextView
+            android:id="@+main/totalFailureToleranceLbl"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingTop="@dimen/marginBetweenVerticalComponents"
+            android:text="@string/totalFailureTolerance"
+            android:textAppearance="?android:attr/textAppearanceLarge" />
+
+        <EditText
+            android:id="@+main/totalFailureToleranceETN"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
             android:inputType="numberDecimal" />
@@ -62,13 +75,6 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="@dimen/marginBetweenVerticalComponents"
             android:text="@string/sendAllBtn" />
-
-        <Button
-            android:id="@+main/lastReportBtn"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/marginBetweenVerticalComponents"
-            android:text="@string/lastReport" />
     </LinearLayout>
 
 </LinearLayout>
