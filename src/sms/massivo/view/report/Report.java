@@ -9,7 +9,7 @@ import sms.massivo.R;
 import sms.massivo.helper.EnvironmentAccessor;
 import sms.massivo.helper.db.bean.DailyReport;
 import sms.massivo.helper.db.dao.HistoryDAO;
-import sms.massivo.helper.db.dao.HistoryDAO.table;
+import sms.massivo.helper.db.table.historic;
 import android.app.ListActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -42,9 +42,9 @@ public class Report extends ListActivity {
 	protected void onResume() {
 		Log.i(TAG, "Obtendo dados da base...");
 
-		String whereClause = String.format("%s = ?", table.from_sim.name());
+		String whereClause = String.format("%s = ?", historic.from_sim.name());
 		String[] whereValues = new String[] { EnvironmentAccessor.getInstance().getSimCardNumber(this) };
-		DailyReport dailyReport = historyDAO.getFirst(whereClause, whereValues, String.format("%s desc", HistoryDAO.table.day.name()));
+		DailyReport dailyReport = historyDAO.getFirst(whereClause, whereValues, String.format("%s desc", historic.day.name()));
 
 		Log.i(TAG, "Adicionando dados na lista...");
 		List<String> values = new ArrayList<String>();

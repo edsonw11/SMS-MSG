@@ -1,6 +1,7 @@
 package sms.massivo.view.main;
 
 import sms.massivo.R;
+import sms.massivo.helper.EnvironmentAccessor;
 import sms.massivo.task.sender.SMSSender;
 import sms.massivo.task.sender.SMSSenderParams;
 import sms.massivo.view.report.Report;
@@ -33,7 +34,10 @@ public class SMSMassivoEvents implements OnClickListener, OnMenuItemClickListene
 		params.setTotalOfMessages(totalOfMessages);
 		params.setFailureTolerance(failureTolerance);
 
-		new SMSSender(smsMassivo).execute(params);
+		if(!smsMassivo.getConfig().isRunning()){
+			SMSSender sender = new SMSSender(smsMassivo);
+			sender.execute(params);
+		}
 
 		Log.i(TAG, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), totalOfMessages));
 		Toast.makeText(smsMassivo, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), totalOfMessages), Toast.LENGTH_SHORT).show();

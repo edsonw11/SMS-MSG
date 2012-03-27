@@ -3,13 +3,12 @@ package sms.massivo.task.sender;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import sms.massivo.R;
+import sms.massivo.helper.ContextHelper;
 import sms.massivo.helper.EnvironmentAccessor;
-import sms.massivo.helper.db.bean.DailyReport;
-import sms.massivo.helper.db.dao.HistoryDAO;
+import sms.massivo.helper.db.controller.DailyController;
 import sms.massivo.view.main.SMSMassivo;
 import android.app.Activity;
 import android.app.Notification;
@@ -32,14 +31,13 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	public static final String PHONE = "phone";
 	private static final String SENT_SMS_INTENT = "SMS_SENT";
 	private static final String DELIVERED_SMS_INTENT = "SMS_DELIVERED";
-
+	
 	private int NOTIFICATION = R.notification.smsSenderNotificationId;
 
 	private NotificationManager notificationManager;
 	private ProgressDialog progressDialog;
-	private final Context context;
-	private HistoryDAO historyDao;
-	private DailyReport dailyReport;
+	private final SMSMassivo smsMassivo;
+	private DailyController dailyController;
 	private BroadcastReceiver deliveryBroadcastReceiver;
 	private BroadcastReceiver sentBroadcastReceiver;
 	private SMSSenderParams param;
@@ -47,27 +45,26 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	private Set<Integer> sentSmsBroadcastReceivedIdCache = new HashSet<Integer>();
 	private Set<Integer> receiverSmsBroadcastReceivedIdCache = new HashSet<Integer>();
 
-	public SMSSender(Context context) {
+	public SMSSender(SMSMassivo smsMassivo) {
 		super();
-		this.context = context;
-		notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+		this.smsMassivo = smsMassivo;
+		notificationManager = (NotificationManager) smsMassivo.getSystemService(Context.NOTIFICATION_SERVICE);
 	}
 
 	@Override
 	protected void onCancelled() {
 		super.onCancelled();
+		smsMassivo.getConfig().markAsStopped();
 	}
 
 	@Override
 	protected void onPreExecute() {
+		smsMassivo.getConfig().markAsRunning();
 		Log.i(TAG, "Preparando inicio do processamento de SMS...");
 		sentSmsBroadcastReceivedIdCache.clear();
 		receiverSmsBroadcastReceivedIdCache.clear();
 		Log.d(TAG, "Carregando di‡logo de progresso...");
 		progressDialog = loadProgressDialog();
-
-		Log.d(TAG, "Abrindo conex‹o com banco de dados...");
-		historyDao = new HistoryDAO(context);
 
 		Log.d(TAG, "Registrando callback de envio e entrega de SMS...");
 		registerSentSMSContextListener();
@@ -77,11 +74,12 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	}
 
 	private ProgressDialog loadProgressDialog() {
-		ProgressDialog progressDialog = new ProgressDialog(EnvironmentAccessor.getInstance().get(SMSMassivo.class));
-		progressDialog.setMessage(context.getString(R.string.progressDialogSendingSms));
+		SMSMassivo smsMassivo = EnvironmentAccessor.getInstance().get(SMSMassivo.class);
+		ProgressDialog progressDialog = new ProgressDialog(ContextHelper.getBaseContext(smsMassivo));
+		progressDialog.setMessage(smsMassivo.getString(R.string.progressDialogSendingSms));
 		progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
 		progressDialog.setCancelable(true);
-		progressDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, context.getString(R.string.cancelBtn), new DialogInterface.OnClickListener() {
+		progressDialog.setButton(ProgressDialog.BUTTON_NEGATIVE, smsMassivo.getString(R.string.cancelBtn), new DialogInterface.OnClickListener() {
 
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
@@ -97,19 +95,17 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		param = params[0];
 		Log.i(TAG, "Par‰metros recebidos: " + param);
 		progressDialog.setMax(param.getTotalOfMessages());
+		String mySimCard = EnvironmentAccessor.getInstance().getSimCardNumber(smsMassivo);
+		dailyController = DailyController.getInstance(smsMassivo, mySimCard, param.getPhone());
 
-		String mySimCard = EnvironmentAccessor.getInstance().getSimCardNumber(context);
-		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), mySimCard, param.getPhone()));
-
-		if (dailyReport.getTotalSent() > param.getTotalOfMessages()) {
-			showNotification(context, String.format(context.getString(R.string.progressDialogMessagesHasBeenSent), dailyReport.getTotalSent()));
+		if (dailyController.getTotalSent() > param.getTotalOfMessages()) {
+			showNotification(smsMassivo, String.format(smsMassivo.getString(R.string.progressDialogMessagesHasBeenSent), dailyController.getTotalSent()));
 			cancel(true);
 			return null;
 		}
 
-		showNotification(context, context.getText(R.string.sendSmsServiceStarted).toString());
+		showNotification(smsMassivo, smsMassivo.getText(R.string.sendSmsServiceStarted).toString());
 
-		counter = dailyReport.getTotalSent();
 		sendSmsInterator();
 
 		while (mustSendMoreSms()) {
@@ -127,11 +123,11 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 		if (hasMore) {
 			if (isCancelled()) {
-				showNotification(context, String.format(context.getString(R.string.notificationSmsSenderCanceled), counter, param.getPhone()));
+				showNotification(smsMassivo, String.format(smsMassivo.getString(R.string.notificationSmsSenderCanceled), counter, param.getPhone()));
 				return false;
 			}
-			if (dailyReport.getTotalOfFailures() >= param.getFailureTolerance()) {
-				showNotification(context, String.format(context.getString(R.string.notificationSmsSenderAborted), counter, param.getPhone(), dailyReport.getTotalOfFailures()));
+			if (dailyController.getTotalOfFailures() >= param.getFailureTolerance()) {
+				showNotification(smsMassivo, String.format(smsMassivo.getString(R.string.notificationSmsSenderAborted), counter, param.getPhone(), dailyController.getTotalOfFailures()));
 				return false;
 			}
 		}
@@ -139,13 +135,15 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	}
 
 	private boolean sendSmsInterator() {
-
-		String message = String.format(context.getString(R.string.notificationSendingSms), counter, param.getPhone());
-		publishProgress(new SMSSenderProgress(counter, message));
-		showNotification(context, message);
-
-		String text = String.format(context.getString(R.string.smsMessagePattern), counter + 1, new Date());
-		sendSMS(param, counter, text);
+		synchronized (dailyController) {
+			counter = dailyController.getTotalSent();
+			String message = String.format(smsMassivo.getString(R.string.notificationSendingSms), counter, param.getPhone());
+			publishProgress(new SMSSenderProgress(counter, message));
+			showNotification(smsMassivo, message);
+	
+			String text = String.format(smsMassivo.getString(R.string.smsMessagePattern), counter + 1, new Date());
+			sendSMS(param, counter, text);
+		}
 		return true;
 	}
 
@@ -162,30 +160,29 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 	@Override
 	protected void onPostExecute(Void result) {
-		String finishMessage = String.format(context.getString(R.string.notificationSmsSentFinished), param.getTotalOfMessages(), param.getPhone());
+		String finishMessage = String.format(smsMassivo.getString(R.string.notificationSmsSentFinished), param.getTotalOfMessages(), param.getPhone());
 		publishProgress(new SMSSenderProgress(param.getTotalOfMessages(), finishMessage));
-		showNotification(context, finishMessage);
+		showNotification(smsMassivo, finishMessage);
 		try {
 			Thread.sleep(500);
 		} catch (InterruptedException e) {
 		}
 
-		Log.i(TAG, "Persistindo dados...");
-		historyDao.update(dailyReport);
 		Log.i(TAG, "Fechando tela de progresso...");
 		progressDialog.dismiss();
 		progressDialog = null;
 		Log.d(TAG, "Fechando conex‹o com banco de dados...");
-		historyDao.close();
+		dailyController.close();
 		Log.d(TAG, "Removendo registro de callback de envio e entrega de SMS...");
 		unregisterReceiverSMSContextListener();
 		unregisterSentSMSContextListener();
 		Log.i(TAG, "Alertando tarefa finalizada via som...");
-		EnvironmentAccessor.getInstance().playRingtone(context);
+		EnvironmentAccessor.getInstance().playRingtone(smsMassivo);
 		super.onPostExecute(result);
 		Log.i(TAG, "Tarefa finalizada");
+		smsMassivo.getConfig().markAsStopped();
 	}
-
+	
 	private void showNotification(Context context, String message) {
 		Log.i(TAG, "Ativando notifica›es...");
 
@@ -209,27 +206,26 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 
 		Intent sentSmsIntent = new Intent(SENT_SMS_INTENT);
 		sentSmsIntent.putExtra("id", id);
-		PendingIntent sentPI = PendingIntent.getBroadcast(context, 0, sentSmsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		PendingIntent sentPI = PendingIntent.getBroadcast(smsMassivo, 0, sentSmsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		
 		Intent deliveredSmsIntent = new Intent(DELIVERED_SMS_INTENT);
 		deliveredSmsIntent.putExtra("id", id);
-		PendingIntent deliveredPI = PendingIntent.getBroadcast(context, 1, deliveredSmsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+		PendingIntent deliveredPI = PendingIntent.getBroadcast(smsMassivo, 1, deliveredSmsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
 		SmsManager sms = SmsManager.getDefault();
 		try {
 			sms.sendTextMessage(param.getPhone(), null, message, sentPI, deliveredPI);
-			dailyReport.incTotalSent();
-			historyDao.update(dailyReport);
+			dailyController.incTotalSent();
 		} catch (IllegalArgumentException e) {
 			String text = String.format("%s [destinationAddress: %s, text: %s]", param.getPhone(), message);
 			Log.e(TAG, text, e);
-			Toast.makeText(context, text, Toast.LENGTH_LONG).show();
+			Toast.makeText(smsMassivo, text, Toast.LENGTH_LONG).show();
 		}
 	}
 
 	private void unregisterReceiverSMSContextListener() {
 		if (deliveryBroadcastReceiver != null) {
-			context.unregisterReceiver(deliveryBroadcastReceiver);
+			smsMassivo.unregisterReceiver(deliveryBroadcastReceiver);
 			deliveryBroadcastReceiver = null;
 		}
 	}
@@ -248,23 +244,23 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 					switch (getResultCode()) {
 					case Activity.RESULT_OK:
 						Log.i(TAG, "SMS entregue");
-						dailyReport.incDelivery();
+						dailyController.incDelivery();
 						break;
 					case Activity.RESULT_CANCELED:
 						Log.e(TAG, "SMS n‹o entregue");
 						Toast.makeText(context, "SMS not delivered", Toast.LENGTH_SHORT).show();
-						dailyReport.incCanceled();
+						dailyController.incCanceled();
 						break;
 					}
 				}
 			};
 		}
-		context.registerReceiver(deliveryBroadcastReceiver, new IntentFilter(DELIVERED_SMS_INTENT));
+		smsMassivo.registerReceiver(deliveryBroadcastReceiver, new IntentFilter(DELIVERED_SMS_INTENT));
 	}
 
 	private void unregisterSentSMSContextListener() {
 		if (sentBroadcastReceiver != null) {
-			context.unregisterReceiver(sentBroadcastReceiver);
+			smsMassivo.unregisterReceiver(sentBroadcastReceiver);
 			sentBroadcastReceiver = null;
 		}
 	}
@@ -283,32 +279,31 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 					switch (getResultCode()) {
 					case Activity.RESULT_OK:
 						Log.i(TAG, "SMS enviado com sucesso");
-						dailyReport.incSendSuccessfully();
+						dailyController.incSendSuccessfully();
 						break;
 					case SmsManager.RESULT_ERROR_GENERIC_FAILURE:
 						Log.e(TAG, "Falha generica no envio de SMS");
 						Toast.makeText(context, "Generic failure", Toast.LENGTH_SHORT).show();
-						dailyReport.incGenericFailure();
+						dailyController.incGenericFailure();
 						break;
 					case SmsManager.RESULT_ERROR_NO_SERVICE:
 						Log.e(TAG, "Sem servio de envio de SMS");
 						Toast.makeText(context, "No service", Toast.LENGTH_SHORT).show();
-						dailyReport.incNoService();
+						dailyController.incNoService();
 						break;
 					case SmsManager.RESULT_ERROR_NULL_PDU:
 						Log.e(TAG, "PDU n‹o encontrada");
 						Toast.makeText(context, "Null PDU", Toast.LENGTH_SHORT).show();
-						dailyReport.incNullPDU();
+						dailyController.incNullPDU();
 						break;
 					case SmsManager.RESULT_ERROR_RADIO_OFF:
 						Log.e(TAG, "R‡dio desligado");
 						Toast.makeText(context, "Radio off", Toast.LENGTH_SHORT).show();
-						dailyReport.incRadioOff();
+						dailyController.incRadioOff();
 						break;
 					default:
 						Toast.makeText(context, "C—digo inesperado: " + getResultCode(), Toast.LENGTH_LONG);
 					}
-					historyDao.update(dailyReport);
 					counter++;
 					if (mustSendMoreSms()) {
 						sendSmsInterator();
@@ -316,7 +311,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 				}
 			};
 		}
-		context.registerReceiver(sentBroadcastReceiver, new IntentFilter(SENT_SMS_INTENT));
+		smsMassivo.registerReceiver(sentBroadcastReceiver, new IntentFilter(SENT_SMS_INTENT));
 	}
 
 }

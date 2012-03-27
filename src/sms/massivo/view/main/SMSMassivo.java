@@ -3,6 +3,7 @@ package sms.massivo.view.main;
 import sms.massivo.R;
 import sms.massivo.helper.EnvironmentAccessor;
 import sms.massivo.helper.MenuHelper;
+import sms.massivo.helper.db.controller.ConfigController;
 import android.app.Activity;
 import android.os.Bundle;
 import android.telephony.PhoneNumberFormattingTextWatcher;
@@ -19,17 +20,20 @@ public class SMSMassivo extends Activity {
 	private EditText failureTolerance;
 	private EditText totalOfSendMessages;
 	private SMSMassivoEvents events;
+	private ConfigController config;
 
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		Log.i(TAG, "Criando SMSMassivo...");
 		setContentView(R.layout.main);
+		
+		config = ConfigController.getInstance(this);
 		events = new SMSMassivoEvents(this);
 
 		phoneToSend = (EditText) findViewById(R.main.phoneToSendETN);
 		phoneToSend.setHint(R.defaultValue.phoneToSend);
-		phoneToSend.setText(R.defaultValue.phoneToSend);
+		phoneToSend.setText(config.getPhone());
 		phoneToSend.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
 		phoneToSend.setEnabled(false);
 		
@@ -51,6 +55,12 @@ public class SMSMassivo extends Activity {
 		MenuHelper.createMenuItem(menu, R.menu.sendSms, R.string.sendAllBtn, android.R.drawable.ic_menu_send, events);
 		MenuHelper.createMenuItem(menu, R.menu.lastReport, R.string.lastReportBtn, android.R.drawable.ic_menu_agenda, events);
 		return super.onCreateOptionsMenu(menu);
+	}
+	
+	@Override
+	protected void onResume() {
+		super.onResume();
+		sentAllBtn.setEnabled(!config.isRunning());
 	}
 	
 	@Override
@@ -80,7 +90,7 @@ public class SMSMassivo extends Activity {
 		} catch (Throwable t) {
 			Log.w(TAG, String.format("Erro na converção do total de SMS a enviar [total:%d]", total), t);
 		}
-		total = Integer.parseInt(getText(R.defaultValue.totalOfMessagesToSend).toString());
+		total = config.getTotalOfMessagesToSend();
 		Log.i(TAG, "Não foi possível obter o total de mensagens. Utilizando o total de mensagens padrão: " + total);
 		return total;
 	}
@@ -97,7 +107,7 @@ public class SMSMassivo extends Activity {
 		} catch (Throwable t) {
 			Log.w(TAG, String.format("Erro na converção do valor de tolerancia a falhas [toleranciaFalhas:%d vez(es)]", failureTolerance), t);
 		}
-		failureTolerance = Integer.parseInt(getText(R.defaultValue.totalFailureTolerance).toString());
+		failureTolerance = config.getFailureTolerance();
 		Log.i(TAG, "Não foi possível obter o valor da tolerância a falhas. Utilizando o valor padrão: " + failureTolerance);
 		return failureTolerance;
 	}
@@ -110,9 +120,13 @@ public class SMSMassivo extends Activity {
 				phone = "+551160470001";
 			}
 		} catch (Throwable t) {
-			phone = "+551160470001";
+			phone = config.getPhone();
 			Log.w(TAG, "Não foi possível obter o telefone. Utilizando telefone padrão: "+phone, t);
 		}
 		return phone;
+	}
+	
+	public ConfigController getConfig(){
+		return config;
 	}
 }

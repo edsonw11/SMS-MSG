@@ -1,26 +1,35 @@
 package sms.massivo.helper.db;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import sms.massivo.helper.db.table.DbTable;
+import sms.massivo.helper.db.table.config;
+import sms.massivo.helper.db.table.historic;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
-public abstract class Database<T> extends SQLiteOpenHelper {
+public abstract class Database<BeanType, DbTableType extends DbTable> extends SQLiteOpenHelper {
 	private static final String TAG = "Database";
 	public static final String DB_NAME = "SMSMassivo";
-	public static final int DB_VERSION = 6;
-	private String tablename;
-	private String createColumns;
-	private String columns;
-	private String primaryKeys;
+	public static final int DB_VERSION = 8;
 
-	public Database(Context context) {
-		super(context, DB_NAME, null, DB_VERSION);
+	private static final List<Class<? extends DbTable>> tables = new ArrayList<Class<? extends DbTable>>();
+	private final DbTable table;
+
+	static {
+		tables.add(historic.class);
+		tables.add(config.class);
 	}
-	
+
+	public Database(Context context, Class<DbTableType> table) {
+		super(context, DB_NAME, null, DB_VERSION);
+		this.table = table.getEnumConstants()[0];
+	}
+
 	@Override
 	protected void finalize() throws Throwable {
 		super.finalize();
@@ -29,69 +38,73 @@ public abstract class Database<T> extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		Log.i(TAG, "Criando tabela "+ tablename);
-		String ddl = String.format("CREATE TABLE %s (%s, primary key(%s));", tablename, createColumns, primaryKeys);
-		db.execSQL(ddl);
-		Log.i(TAG, "Tabela criada com êxito");
-	}
+		for (Class<? extends DbTable> tc : tables) {
+			DbTable dbTable = tc.getEnumConstants()[0];
 
-	protected void setTablename(String tablename) {
-		this.tablename = tablename;
-	}
-
-	protected void setCreateColumns(String createColumns) {
-		this.createColumns = createColumns;
-	}
-	
-	protected void setPrimaryKeys(String primaryKeys) {
-		this.primaryKeys = primaryKeys;
-	}
-
-	protected void setColumns(String columns) {
-		this.columns = columns;
+			Log.i(TAG, "Criando tabela " + dbTable.tablename());
+			String ddl;
+			if (dbTable.primaryKeys() != null && dbTable.primaryKeys().length() > 0) {
+				ddl = String.format("CREATE TABLE %s (%s, primary key(%s));", dbTable.tablename(), dbTable.createColumns(), dbTable.primaryKeys());
+			} else {
+				ddl = String.format("CREATE TABLE %s (%s);", dbTable.tablename(), dbTable.createColumns());
+			}
+			db.execSQL(ddl);
+			Log.i(TAG, "Tabela criada com êxito");
+		}
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		Log.w(TAG, String.format("Atualizando tabela %s da versão %d para %d...", tablename, oldVersion, newVersion));
-		String ddl = "DROP TABLE IF EXISTS " + tablename;
-		db.execSQL(ddl);
+		for (Class<? extends DbTable> tc : tables) {
+			DbTable dbTable = tc.getEnumConstants()[0];
+			Log.w(TAG, String.format("Atualizando tabela %s da versão %d para %d...", dbTable.tablename(), oldVersion, newVersion));
+			String ddl = "DROP TABLE IF EXISTS " + dbTable.tablename();
+			db.execSQL(ddl);
+		}
 		onCreate(db);
 		Log.w(TAG, "Tabela atualizada com êxito");
 	}
 
-	public abstract ContentValues toContentValues(T bean);
+	public abstract ContentValues toContentValues(BeanType bean);
 
-	public void insert(T bean) {
-		Log.i(TAG,String.format("Inserindo dados em %s: %s", tablename, bean));
-		getWritableDatabase().insert(tablename, null, toContentValues(bean));
+	public void insert(BeanType bean) {
+		Log.i(TAG, String.format("Inserindo dados em %s: %s", table.tablename(), bean));
+		getWritableDatabase().insert(table.tablename(), null, toContentValues(bean));
 	}
 
-	public void update(T bean, String whereClause, String[] whereParams) {
-		Log.i(TAG,String.format("Atualizando dados em %s[%s: %s]: %s", tablename, whereClause, whereParams, bean));
-		getWritableDatabase().update(tablename, toContentValues(bean), whereClause, whereParams);
+	public void update(BeanType bean, String whereClause, String[] whereParams) {
+		Log.i(TAG, String.format("Atualizando dados em %s[%s: %s]: %s", table.tablename(), whereClause, whereParams, bean));
+		getWritableDatabase().update(table.tablename(), toContentValues(bean), whereClause, whereParams);
 	}
 
 	public void delete(String whereClause, String[] whereParams) {
-		Log.i(TAG,String.format("Excluindo dados em %s[%s: %s]s", tablename, whereClause, whereParams));
-		getWritableDatabase().delete(tablename, whereClause, whereParams);
+		Log.i(TAG, String.format("Excluindo dados em %s[%s: %s]s", table.tablename(), whereClause, whereParams));
+		getWritableDatabase().delete(table.tablename(), whereClause, whereParams);
 	}
 
-	public abstract List<T> getAll(String whereClause, String[] whereValues, String orderBy);
+	public abstract List<BeanType> getAll(String whereClause, String[] whereValues, String orderBy);
 
-	public List<T> getAll(String orderBy) {
+	public List<BeanType> getAll(String orderBy) {
 		return getAll(null, null, orderBy);
 	}
 
-	public T getFirst(String whereClause, String[] whereValues, String orderBy) {
-		List<T> results = getAll(whereClause, whereValues, orderBy);
+	public BeanType getFirst(String whereClause, String[] whereValues, String orderBy) {
+		List<BeanType> results = getAll(whereClause, whereValues, orderBy);
 		if (results.isEmpty()) {
 			return null;
 		}
 		return results.get(0);
 	}
 
-	public T getFirst(String orderBy) {
+	public BeanType getFirst(String orderBy) {
 		return getFirst(null, null, orderBy);
+	}
+
+	protected String tablename(){
+		return table.tablename();
+	}
+	
+	protected String columns(){
+		return table.columns();
 	}
 }

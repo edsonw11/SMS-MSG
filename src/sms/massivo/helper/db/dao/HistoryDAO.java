@@ -6,101 +6,49 @@ import java.util.List;
 import sms.massivo.helper.EnvironmentAccessor;
 import sms.massivo.helper.db.Database;
 import sms.massivo.helper.db.bean.DailyReport;
+import sms.massivo.helper.db.table.historic;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 
-public class HistoryDAO extends Database<DailyReport> {
+public class HistoryDAO extends Database<DailyReport, historic> {
 
 	private String mySimCardNumber;
 
-	public static enum table {
-		day("TEXT"),
-		from_sim("TEXT"),
-		to_phone("TEXT"),
-		send_successfully("INTEGER"),
-		generic_failure("INTEGER"),
-		no_service("INTEGER"),
-		null_pdu("INTEGER"),
-		radio_off("INTEGER"),
-		delivery("INTEGER"),
-		canceled("INTEGER"),
-		total_sent("INTEGER");
-		private String type;
-
-		private table(String type) {
-			this.type = type;
-		}
-
-		public String type() {
-			return type;
-		}
-
-		public static String tablename() {
-			return "HISTORIC";
-		}
-
-		public static String primaryKeys() {
-			return String.format("%s,%s", table.day.name(), table.from_sim.name());
-		}
-
-		public static String createColumns() {
-			StringBuilder sb = new StringBuilder();
-			for (table t : values()) {
-				sb.append(t.name()).append(" ").append(t.type()).append(", ");
-			}
-			sb.setLength(sb.length() - 2);
-			return sb.toString();
-		}
-
-		public static String columns() {
-			StringBuilder sb = new StringBuilder();
-			for (table t : values()) {
-				sb.append(t.name()).append(", ");
-			}
-			sb.setLength(sb.length() - 2);
-			return sb.toString();
-		}
-	}
-
 	public HistoryDAO(Context context) {
-		super(context);
+		super(context, historic.class);
 		mySimCardNumber = EnvironmentAccessor.getInstance().getSimCardNumber(context);
-		setTablename(table.tablename());
-		setColumns(table.columns());
-		setCreateColumns(table.createColumns());
-		setPrimaryKeys(table.primaryKeys());
 	}
 
 	@Override
 	public ContentValues toContentValues(DailyReport bean) {
 		ContentValues values = new ContentValues();
 		if (bean.getDay() != null)
-			values.put(table.day.name(), bean.getDay());
+			values.put(historic.day.name(), bean.getDay());
 		if (bean.getFromSim() != null)
-			values.put(table.from_sim.name(), bean.getFromSim());
+			values.put(historic.from_sim.name(), bean.getFromSim());
 		if (bean.getToPhone() != null)
-			values.put(table.to_phone.name(), bean.getToPhone());
-		values.put(table.delivery.name(), bean.getDelivery());
-		values.put(table.canceled.name(), bean.getCanceled());
-		values.put(table.generic_failure.name(), bean.getGenericFailure());
-		values.put(table.no_service.name(), bean.getNoService());
-		values.put(table.null_pdu.name(), bean.getNullPDU());
-		values.put(table.radio_off.name(), bean.getRadioOff());
-		values.put(table.send_successfully.name(), bean.getSendSuccessfully());
-		values.put(table.total_sent.name(), bean.getTotalSent());
+			values.put(historic.to_phone.name(), bean.getToPhone());
+		values.put(historic.delivery.name(), bean.getDelivery());
+		values.put(historic.canceled.name(), bean.getCanceled());
+		values.put(historic.generic_failure.name(), bean.getGenericFailure());
+		values.put(historic.no_service.name(), bean.getNoService());
+		values.put(historic.null_pdu.name(), bean.getNullPDU());
+		values.put(historic.radio_off.name(), bean.getRadioOff());
+		values.put(historic.send_successfully.name(), bean.getSendSuccessfully());
+		values.put(historic.total_sent.name(), bean.getTotalSent());
 
 		return values;
 	}
 
 	public void update(DailyReport bean) {
-		String whereClause = String.format("%s = ? and %s = ?", table.day.name(), table.from_sim.name());
+		String whereClause = String.format("%s = ? and %s = ?", historic.day.name(), historic.from_sim.name());
 		update(bean, whereClause, new String[] { bean.getDay(), bean.getFromSim() });
 	}
 
 	public void delete(DailyReport bean) {
-		String whereClause = String.format("%s = ? and %s = ?", table.day.name(), table.from_sim.name());
-		delete(whereClause, new String[] { bean.getDay(), bean.getFromSim()});
+		String whereClause = String.format("%s = ? and %s = ?", historic.day.name(), historic.from_sim.name());
+		delete(whereClause, new String[] { bean.getDay(), bean.getFromSim() });
 	}
 
 	@Override
@@ -109,17 +57,17 @@ public class HistoryDAO extends Database<DailyReport> {
 		List<DailyReport> results = new ArrayList<DailyReport>();
 		Cursor c = null;
 		try {
-			c = getReadableDatabase().query(table.tablename(), table.columns().split(", "), whereClause, whereValues, null, null, orderBy);
+			c = getReadableDatabase().query(tablename(), columns().split(", "), whereClause, whereValues, null, null, orderBy);
 			while (c.moveToNext()) {
-				DailyReport result = new DailyReport(getColumnString(c, table.day), mySimCardNumber, getColumnString(c, table.to_phone));
-				result.setCanceled(getColumnInt(c, table.canceled));
-				result.setDelivery(getColumnInt(c, table.delivery));
-				result.setGenericFailure(getColumnInt(c, table.generic_failure));
-				result.setNoService(getColumnInt(c, table.no_service));
-				result.setNullPDU(getColumnInt(c, table.null_pdu));
-				result.setRadioOff(getColumnInt(c, table.radio_off));
-				result.setSendSuccessfully(getColumnInt(c, table.send_successfully));
-				result.setTotalSent(getColumnInt(c, table.total_sent));
+				DailyReport result = new DailyReport(getColumnString(c, historic.day), mySimCardNumber, getColumnString(c, historic.to_phone));
+				result.setCanceled(getColumnInt(c, historic.canceled));
+				result.setDelivery(getColumnInt(c, historic.delivery));
+				result.setGenericFailure(getColumnInt(c, historic.generic_failure));
+				result.setNoService(getColumnInt(c, historic.no_service));
+				result.setNullPDU(getColumnInt(c, historic.null_pdu));
+				result.setRadioOff(getColumnInt(c, historic.radio_off));
+				result.setSendSuccessfully(getColumnInt(c, historic.send_successfully));
+				result.setTotalSent(getColumnInt(c, historic.total_sent));
 
 				results.add(result);
 			}
@@ -130,16 +78,16 @@ public class HistoryDAO extends Database<DailyReport> {
 		return results;
 	}
 
-	private String getColumnString(Cursor c, table column) {
+	private String getColumnString(Cursor c, historic column) {
 		return c.getString(c.getColumnIndex(column.name()));
 	}
 
-	private int getColumnInt(Cursor c, table column) {
+	private int getColumnInt(Cursor c, historic column) {
 		return c.getInt(c.getColumnIndex(column.name()));
 	}
 
 	public DailyReport getOrCreate(DailyReport bean) {
-		String whereClause = String.format("%s = ? and %s = ?", table.day.name(), table.from_sim.name());
+		String whereClause = String.format("%s = ? and %s = ?", historic.day.name(), historic.from_sim.name());
 		DailyReport dr = getFirst(whereClause, new String[] { bean.getDay(), bean.getFromSim() }, null);
 		if (dr == null) {
 			insert(bean);
