@@ -10,7 +10,11 @@ public class MenuHelper {
 	}
 
 	public static MenuItem createMenuItem(Menu menu, int itemId, int titleRes, int iconRes, OnMenuItemClickListener event) {
-		MenuItem item = menu.add(0, itemId, Menu.NONE, titleRes);
+		return createMenuItem(menu, 0, itemId, titleRes, iconRes, event);
+	}
+	
+	public static MenuItem createMenuItem(Menu menu, int groupId, int itemId, int titleRes, int iconRes, OnMenuItemClickListener event) {
+		MenuItem item = menu.add(groupId, itemId, Menu.NONE, titleRes);
 		item.setIcon(iconRes);
 		item.setOnMenuItemClickListener(event);
 		return item;

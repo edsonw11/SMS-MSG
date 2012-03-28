@@ -4,7 +4,8 @@ public enum config implements DbTable {
 	phone("TEXT"),
 	failureTolerance("INTEGER"),
 	total_messages("INTEGER"),
-	is_running("INTEGER");
+	is_running("INTEGER"),
+	stopped_by_user("INTEGER"),;
 	private String type;
 
 	private config(String type) {

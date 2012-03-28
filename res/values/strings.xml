@@ -16,9 +16,10 @@
     <string name="notificationSmsSenderCanceled">Envio Cancelado. Enviou %1$d SMSs para %2$s</string>
     <string name="notificationSmsSenderAborted">Envio Abortado devido a excesso de erros. Enviou %1$d SMSs para %2$s com %3$d erros</string>
     <string name="notificationSendingSms">Enviando SMS %1$d para %2$s</string>
-    <string name="smsMessagePattern">%1$s %2$tD %2$tR enviada via android.</string>
+    <string name="smsMessagePattern">%1$03d %2$tD %2$tR enviada via android.</string>
     <string name="notificationSmsSentFinished">Finalizado envio de %1$s mensagens para %2$s</string>
     <string name="phoneToSend">Telefone de destino</string>
     <string name="totalFailureTolerance">Tolerância a falhas</string>
+    <string name="cancelAllBtn">Cancelar</string>
 
 </resources>

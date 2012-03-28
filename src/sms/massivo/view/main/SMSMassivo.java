@@ -27,7 +27,7 @@ public class SMSMassivo extends Activity {
 		super.onCreate(savedInstanceState);
 		Log.i(TAG, "Criando SMSMassivo...");
 		setContentView(R.layout.main);
-		
+
 		config = ConfigController.getInstance(this);
 		events = new SMSMassivoEvents(this);
 
@@ -36,10 +36,10 @@ public class SMSMassivo extends Activity {
 		phoneToSend.setText(config.getPhone());
 		phoneToSend.addTextChangedListener(new PhoneNumberFormattingTextWatcher());
 		phoneToSend.setEnabled(false);
-		
+
 		failureTolerance = (EditText) findViewById(R.main.totalFailureToleranceETN);
 		failureTolerance.setHint(R.defaultValue.totalFailureTolerance);
-		
+
 		totalOfSendMessages = (EditText) findViewById(R.main.totalOfSendMessagesETN);
 		totalOfSendMessages.setHint(R.defaultValue.totalOfMessagesToSend);
 
@@ -52,17 +52,27 @@ public class SMSMassivo extends Activity {
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		MenuHelper.createMenuItem(menu, R.menu.sendSms, R.string.sendAllBtn, android.R.drawable.ic_menu_send, events);
-		MenuHelper.createMenuItem(menu, R.menu.lastReport, R.string.lastReportBtn, android.R.drawable.ic_menu_agenda, events);
+		MenuHelper.createMenuItem(menu, R.menuGroup.task, R.menu.sendSms, R.string.sendAllBtn, android.R.drawable.ic_menu_send, events);
+		MenuHelper.createMenuItem(menu, R.menuGroup.main, R.menu.lastReport, R.string.lastReportBtn, android.R.drawable.ic_menu_agenda, events);
+		MenuHelper.createMenuItem(menu, R.menuGroup.untask, R.menu.cancelSendSms, R.string.cancelBtn, android.R.drawable.ic_menu_close_clear_cancel, events);
 		return super.onCreateOptionsMenu(menu);
 	}
-	
+
+	@Override
+	public boolean onPrepareOptionsMenu(Menu menu) {
+		boolean enabled = !config.isRunning();
+
+		menu.setGroupEnabled(R.menuGroup.task, enabled);
+		menu.setGroupEnabled(R.menuGroup.untask, !enabled);
+		return super.onPrepareOptionsMenu(menu);
+	}
+
 	@Override
 	protected void onResume() {
 		super.onResume();
-		sentAllBtn.setEnabled(!config.isRunning());
+		updateScreen();
 	}
-	
+
 	@Override
 	protected void onDestroy() {
 		Log.i(TAG, "Destruindo Atividade...");
@@ -72,10 +82,19 @@ public class SMSMassivo extends Activity {
 		Log.i(TAG, "Atividade destru’da");
 	}
 
-	public void setStarted(boolean value) {
-		Log.i(TAG, (value ? "Iniciado" : "Terminado") + " envio de SMS");
-		totalOfSendMessages.setEnabled(!value);
-		sentAllBtn.setEnabled(!value);
+	public void updateScreen() {
+		boolean enabled = !config.isRunning();
+
+		totalOfSendMessages.setEnabled(enabled);
+		failureTolerance.setEnabled(enabled);
+
+		if (enabled)
+			sentAllBtn.setText(R.string.sendAllBtn);
+		else{
+			sentAllBtn.setText(R.string.cancelAllBtn);
+			sentAllBtn.requestFocus();
+			sentAllBtn.requestFocusFromTouch();
+		}
 	}
 
 	public int getTotalOfMessagesToSend() {
@@ -121,12 +140,12 @@ public class SMSMassivo extends Activity {
 			}
 		} catch (Throwable t) {
 			phone = config.getPhone();
-			Log.w(TAG, "N‹o foi poss’vel obter o telefone. Utilizando telefone padr‹o: "+phone, t);
+			Log.w(TAG, "N‹o foi poss’vel obter o telefone. Utilizando telefone padr‹o: " + phone, t);
 		}
 		return phone;
 	}
-	
-	public ConfigController getConfig(){
+
+	public ConfigController getConfig() {
 		return config;
 	}
 }

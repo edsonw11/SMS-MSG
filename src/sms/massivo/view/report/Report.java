@@ -25,7 +25,7 @@ public class Report extends ListActivity {
 		super.onCreate(savedInstanceState);
 
 		setContentView(R.layout.report);
-		
+
 		Log.d(TAG, "Abrindo conex‹o com o banco de dados...");
 		historyDAO = new HistoryDAO(this);
 	}
@@ -33,11 +33,11 @@ public class Report extends ListActivity {
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
-		
+
 		Log.d(TAG, "Fechando conex‹o com o banco de dados...");
 		historyDAO.close();
 	}
-	
+
 	@Override
 	protected void onResume() {
 		Log.i(TAG, "Obtendo dados da base...");
@@ -46,16 +46,18 @@ public class Report extends ListActivity {
 		String[] whereValues = new String[] { EnvironmentAccessor.getInstance().getSimCardNumber(this) };
 		DailyReport dailyReport = historyDAO.getFirst(whereClause, whereValues, String.format("%s desc", historic.day.name()));
 
-		Log.i(TAG, "Adicionando dados na lista...");
 		List<String> values = new ArrayList<String>();
-		for (Field f : DailyReport.class.getDeclaredFields()) {
-			try {
-				if (Modifier.isTransient(f.getModifiers()))
-					continue;
-				f.setAccessible(true);
-				values.add(String.format("%s: %s", f.getName(), f.get(dailyReport)));
-			} catch (Exception e) {
-				Log.e(TAG, e.getMessage(), e);
+		if (dailyReport != null) {
+			Log.i(TAG, "Adicionando dados na lista...");
+			for (Field f : DailyReport.class.getDeclaredFields()) {
+				try {
+					if (Modifier.isTransient(f.getModifiers()))
+						continue;
+					f.setAccessible(true);
+					values.add(String.format("%s: %s", f.getName(), f.get(dailyReport)));
+				} catch (Exception e) {
+					Log.e(TAG, e.getMessage(), e);
+				}
 			}
 		}
 

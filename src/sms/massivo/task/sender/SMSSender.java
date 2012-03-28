@@ -8,6 +8,7 @@ import java.util.Set;
 import sms.massivo.R;
 import sms.massivo.helper.ContextHelper;
 import sms.massivo.helper.EnvironmentAccessor;
+import sms.massivo.helper.NotificatorHelper;
 import sms.massivo.helper.db.controller.DailyController;
 import sms.massivo.view.main.SMSMassivo;
 import android.app.Activity;
@@ -31,11 +32,10 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	public static final String PHONE = "phone";
 	private static final String SENT_SMS_INTENT = "SMS_SENT";
 	private static final String DELIVERED_SMS_INTENT = "SMS_DELIVERED";
-	
+
 	private int NOTIFICATION = R.notification.smsSenderNotificationId;
 
-	private NotificationManager notificationManager;
-	private ProgressDialog progressDialog;
+	private SMSSenderProgressDialog progressDialog;
 	private final SMSMassivo smsMassivo;
 	private DailyController dailyController;
 	private BroadcastReceiver deliveryBroadcastReceiver;
@@ -44,17 +44,19 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	private int counter;
 	private Set<Integer> sentSmsBroadcastReceivedIdCache = new HashSet<Integer>();
 	private Set<Integer> receiverSmsBroadcastReceivedIdCache = new HashSet<Integer>();
+	private NotificatorHelper notificatorHelper;
 
 	public SMSSender(SMSMassivo smsMassivo) {
 		super();
 		this.smsMassivo = smsMassivo;
-		notificationManager = (NotificationManager) smsMassivo.getSystemService(Context.NOTIFICATION_SERVICE);
+		notificatorHelper = new NotificatorHelper(smsMassivo, NOTIFICATION);
 	}
 
 	@Override
 	protected void onCancelled() {
 		super.onCancelled();
 		smsMassivo.getConfig().markAsStopped();
+		smsMassivo.getConfig().markAsStoppedByUser();
 	}
 
 	@Override
@@ -64,7 +66,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		sentSmsBroadcastReceivedIdCache.clear();
 		receiverSmsBroadcastReceivedIdCache.clear();
 		Log.d(TAG, "Carregando di‡logo de progresso...");
-		progressDialog = loadProgressDialog();
+		progressDialog = new SMSSenderProgressDialog(smsMassivo, this, smsMassivo);
 
 		Log.d(TAG, "Registrando callback de envio e entrega de SMS...");
 		registerSentSMSContextListener();
@@ -74,7 +76,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	}
 
 	private ProgressDialog loadProgressDialog() {
-		SMSMassivo smsMassivo = EnvironmentAccessor.getInstance().get(SMSMassivo.class);
+		final SMSMassivo smsMassivo = EnvironmentAccessor.getInstance().get(SMSMassivo.class);
 		ProgressDialog progressDialog = new ProgressDialog(ContextHelper.getBaseContext(smsMassivo));
 		progressDialog.setMessage(smsMassivo.getString(R.string.progressDialogSendingSms));
 		progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
@@ -84,6 +86,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 			@Override
 			public void onClick(DialogInterface dialog, int which) {
 				SMSSender.this.cancel(true);
+				smsMassivo.getConfig().markAsStoppedByUser();
 			}
 		});
 		progressDialog.show();
@@ -99,12 +102,12 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		dailyController = DailyController.getInstance(smsMassivo, mySimCard, param.getPhone());
 
 		if (dailyController.getTotalSent() > param.getTotalOfMessages()) {
-			showNotification(smsMassivo, String.format(smsMassivo.getString(R.string.progressDialogMessagesHasBeenSent), dailyController.getTotalSent()));
+			notify(R.string.progressDialogMessagesHasBeenSent, dailyController.getTotalSent());
 			cancel(true);
 			return null;
 		}
 
-		showNotification(smsMassivo, smsMassivo.getText(R.string.sendSmsServiceStarted).toString());
+		notify(R.string.sendSmsServiceStarted);
 
 		sendSmsInterator();
 
@@ -122,12 +125,12 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		boolean hasMore = counter < param.getTotalOfMessages();
 
 		if (hasMore) {
-			if (isCancelled()) {
-				showNotification(smsMassivo, String.format(smsMassivo.getString(R.string.notificationSmsSenderCanceled), counter, param.getPhone()));
+			if (isCancelled() || smsMassivo.getConfig().isStoppedByUser()) {
+				notify(R.string.notificationSmsSenderCanceled, counter, param.getPhone());
 				return false;
 			}
 			if (dailyController.getTotalOfFailures() >= param.getFailureTolerance()) {
-				showNotification(smsMassivo, String.format(smsMassivo.getString(R.string.notificationSmsSenderAborted), counter, param.getPhone(), dailyController.getTotalOfFailures()));
+				notify(R.string.notificationSmsSenderAborted, counter, param.getPhone(), dailyController.getTotalOfFailures());
 				return false;
 			}
 		}
@@ -139,8 +142,8 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 			counter = dailyController.getTotalSent();
 			String message = String.format(smsMassivo.getString(R.string.notificationSendingSms), counter, param.getPhone());
 			publishProgress(new SMSSenderProgress(counter, message));
-			showNotification(smsMassivo, message);
-	
+			notify(R.string.notificationSendingSms, counter, param.getPhone());
+
 			String text = String.format(smsMassivo.getString(R.string.smsMessagePattern), counter + 1, new Date());
 			sendSMS(param, counter, text);
 		}
@@ -153,8 +156,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		if (progressDialog != null) {
 			SMSSenderProgress progress = values[0];
 
-			progressDialog.setMessage(progress.getMessage());
-			progressDialog.setProgress(progress.getProgress());
+			progressDialog.update(progress);
 		}
 	}
 
@@ -162,7 +164,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 	protected void onPostExecute(Void result) {
 		String finishMessage = String.format(smsMassivo.getString(R.string.notificationSmsSentFinished), param.getTotalOfMessages(), param.getPhone());
 		publishProgress(new SMSSenderProgress(param.getTotalOfMessages(), finishMessage));
-		showNotification(smsMassivo, finishMessage);
+		notify(R.string.notificationSmsSentFinished, param.getTotalOfMessages(), param.getPhone());
 		try {
 			Thread.sleep(500);
 		} catch (InterruptedException e) {
@@ -178,27 +180,20 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		unregisterSentSMSContextListener();
 		Log.i(TAG, "Alertando tarefa finalizada via som...");
 		EnvironmentAccessor.getInstance().playRingtone(smsMassivo);
+		Log.i(TAG, "Alertando tarefa finalizada via vibrador...");
+		EnvironmentAccessor.getInstance().vibrate(smsMassivo);
 		super.onPostExecute(result);
 		Log.i(TAG, "Tarefa finalizada");
 		smsMassivo.getConfig().markAsStopped();
 	}
-	
-	private void showNotification(Context context, String message) {
-		Log.i(TAG, "Ativando notifica›es...");
 
-		Notification notification = new Notification(android.R.drawable.ic_menu_upload, message, System.currentTimeMillis());
+	private void notify(int messageId, Object... messageParams) {
+		Log.i(TAG, "Atualizando notifica›es...");
 
-		Log.i(TAG, "Associando notifica›es a aplica‹o...");
-		// The PendingIntent to launch our activity if the user selects this notification
-		PendingIntent contentIntent = PendingIntent.getActivity(context, 2, new Intent(context, SMSMassivo.class), 0);
+		Intent intentToCall = new Intent(smsMassivo, SMSMassivo.class);
+		notificatorHelper.notify(android.R.drawable.ic_menu_upload, intentToCall, R.string.app_name, messageId, messageParams);
 
-		// Set the info for the views that show in the notification panel.
-		notification.setLatestEventInfo(context, context.getText(R.string.app_name), message, contentIntent);
-
-		// Send the notification.
-		notificationManager.notify(NOTIFICATION, notification);
-
-		Log.i(TAG, "Notifica›es ativadas");
+		Log.i(TAG, "Notifica›es atualizadas");
 	}
 
 	private void sendSMS(final SMSSenderParams param, final int id, final String message) {
@@ -207,7 +202,7 @@ public class SMSSender extends AsyncTask<SMSSenderParams, SMSSenderProgress, Voi
 		Intent sentSmsIntent = new Intent(SENT_SMS_INTENT);
 		sentSmsIntent.putExtra("id", id);
 		PendingIntent sentPI = PendingIntent.getBroadcast(smsMassivo, 0, sentSmsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		
+
 		Intent deliveredSmsIntent = new Intent(DELIVERED_SMS_INTENT);
 		deliveredSmsIntent.putExtra("id", id);
 		PendingIntent deliveredPI = PendingIntent.getBroadcast(smsMassivo, 1, deliveredSmsIntent, PendingIntent.FLAG_UPDATE_CURRENT);

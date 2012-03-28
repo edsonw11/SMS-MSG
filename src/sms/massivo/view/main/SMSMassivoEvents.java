@@ -1,15 +1,14 @@
 package sms.massivo.view.main;
 
 import sms.massivo.R;
-import sms.massivo.helper.EnvironmentAccessor;
 import sms.massivo.task.sender.SMSSender;
 import sms.massivo.task.sender.SMSSenderParams;
 import sms.massivo.view.report.Report;
 import android.content.Intent;
 import android.util.Log;
 import android.view.MenuItem;
-import android.view.View;
 import android.view.MenuItem.OnMenuItemClickListener;
+import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Toast;
 
@@ -24,6 +23,8 @@ public class SMSMassivoEvents implements OnClickListener, OnMenuItemClickListene
 	}
 
 	private void onClickSendAll() {
+		if (smsMassivo.getConfig().isRunning())
+			return;
 		Log.i(TAG, "Acionado comando para enviar todos os SMS");
 		int totalOfMessages = smsMassivo.getTotalOfMessagesToSend();
 		int failureTolerance = smsMassivo.getTotalFailureTolerance();
@@ -34,13 +35,13 @@ public class SMSMassivoEvents implements OnClickListener, OnMenuItemClickListene
 		params.setTotalOfMessages(totalOfMessages);
 		params.setFailureTolerance(failureTolerance);
 
-		if(!smsMassivo.getConfig().isRunning()){
-			SMSSender sender = new SMSSender(smsMassivo);
-			sender.execute(params);
-		}
+		SMSSender sender = new SMSSender(smsMassivo);
+		sender.execute(params);
 
 		Log.i(TAG, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), totalOfMessages));
 		Toast.makeText(smsMassivo, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), totalOfMessages), Toast.LENGTH_SHORT).show();
+
+		smsMassivo.updateScreen();
 	}
 
 	private void onClickLastReport() {
@@ -50,11 +51,21 @@ public class SMSMassivoEvents implements OnClickListener, OnMenuItemClickListene
 		smsMassivo.startActivity(intent);
 	}
 
+	private void onClickCancel() {
+		Log.i(TAG, "Acionado comando para cancelar envio de SMS");
+
+		smsMassivo.getConfig().markAsStoppedByUser();
+		smsMassivo.updateScreen();
+	}
+
 	@Override
 	public void onClick(View v) {
 		switch (v.getId()) {
 		case R.main.sendAllBtn:
-			onClickSendAll();
+			if (smsMassivo.getConfig().isRunning())
+				onClickCancel();
+			else
+				onClickSendAll();
 			break;
 		}
 	}
@@ -68,7 +79,9 @@ public class SMSMassivoEvents implements OnClickListener, OnMenuItemClickListene
 		case R.menu.lastReport:
 			onClickLastReport();
 			break;
+		case R.menu.cancelSendSms:
+			onClickCancel();
 		}
-		return true; //prevents bubble effect
+		return true; // prevents bubble effect
 	}
 }

@@ -13,6 +13,7 @@ import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Vibrator;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
@@ -40,6 +41,11 @@ public class EnvironmentAccessor {
 		return tMgr.getSimSerialNumber();
 	}
 
+	public void vibrate(Context context){
+		Vibrator vib = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+		vib.vibrate(500);
+	}
+	
 	public void playRingtone(Context context) {
 		Uri alert = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM);
 		if (alert == null) {

@@ -53,12 +53,24 @@ public class ConfigController {
 		return config.isRunning();
 	}
 
-	public synchronized void markAsRunning(){
+	public synchronized void markAsRunning() {
 		config.setRunning(1);
+		config.setStoppedByUser(0);
 		configDao.update(config);
 	}
-	public synchronized void markAsStopped(){
+
+	public synchronized void markAsStopped() {
 		config.setRunning(0);
 		configDao.update(config);
+	}
+
+	public synchronized void markAsStoppedByUser() {
+		config.setStoppedByUser(1);
+		config.setRunning(0);
+		configDao.update(config);
+	}
+
+	public synchronized boolean isStoppedByUser() {
+		return config.isStoppedByUser();
 	}
 }

@@ -1,7 +1,5 @@
 package sms.massivo.helper;
 
-import sms.massivo.R;
-import sms.massivo.view.main.SMSMassivo;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -27,7 +25,7 @@ public class NotificatorHelper {
 	
 	public void notify(int iconRes, Intent intentToCall, int titleId, int messageId, Object ... messageParams){
 		PendingIntent contentIntent = PendingIntent.getActivity(context, 0, intentToCall, PendingIntent.FLAG_UPDATE_CURRENT);
-		String msg = String.format(context.getString(R.string.notificationSmsSenderAborted), messageParams);
+		String msg = String.format(context.getString(messageId), messageParams);
 
 		Notification notification = new Notification(iconRes, msg, System.currentTimeMillis());
 		notification.setLatestEventInfo(context, context.getText(titleId), msg, contentIntent);
