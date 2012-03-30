@@ -7,6 +7,8 @@ import sms.massivo.helper.db.controller.ConfigController;
 import sms.massivo.helper.db.controller.DailyController;
 import sms.massivo.task.sender.SMSSenderManager;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.telephony.PhoneNumberFormattingTextWatcher;
 import android.util.Log;
@@ -41,6 +43,11 @@ public class SMSMassivo extends Activity {
 
 		config = ConfigController.getInstance(this);
 		events = new SMSMassivoEvents(this);
+		String simCard = EnvironmentAccessor.getInstance().getSimCardNumber(this);
+
+		if (simCard == null) {
+			messageDialogToExit();
+		}
 
 		phoneToSend = (EditText) findViewById(R.main.phoneToSendETN);
 		phoneToSend.setHint(R.defaultValue.phoneToSend);
@@ -50,11 +57,11 @@ public class SMSMassivo extends Activity {
 
 		failureTolerance = (EditText) findViewById(R.main.totalFailureToleranceETN);
 		failureTolerance.setHint(R.defaultValue.totalFailureTolerance);
-		
-		totalOfSlaves = (SeekBar)findViewById(R.main.totalOfSlavesSKB);
+
+		totalOfSlaves = (SeekBar) findViewById(R.main.totalOfSlavesSKB);
 		totalOfSlaves.setProgress(getResources().getInteger(R.defaultValue.totalOfSlaves));
 		totalOfSlaves.setOnSeekBarChangeListener(events);
-		
+
 		totalOfSlavesLbl = (TextView) findViewById(R.main.totalOfSlavesLbl);
 
 		totalOfSendMessages = (EditText) findViewById(R.main.totalOfSendMessagesETN);
@@ -63,18 +70,30 @@ public class SMSMassivo extends Activity {
 
 		sentAllBtn = (Button) findViewById(R.main.sendAllBtn);
 		sentAllBtn.setOnClickListener(events);
-		
+
 		smsSent = (ProgressBar) findViewById(R.main.smsSentPRB);
 		smsSent.setMax(config.getTotalOfMessagesToSend());
-		dailyController = DailyController.getInstance(this, EnvironmentAccessor.getInstance().getSimCardNumber(this), config.getPhone());
-		smsSent.setProgress(dailyController.getTotalSent());
-		
+		if (simCard != null) {
+			dailyController = DailyController.getInstance(this, simCard, config.getPhone());
+			smsSent.setProgress(dailyController.getTotalSent());
+		}
+
 		manager = new SMSSenderManager(this);
 
 		EnvironmentAccessor.getInstance().add(this);
-		
+
 		config.markAsStopped();
 		Log.i(TAG, "SMSMassivo criado com sucesso");
+	}
+
+	private void messageDialogToExit() {
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setMessage("N‹o h‡ SIM. Insira um SIM Card e tente novamente").setCancelable(false).setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+			public void onClick(DialogInterface dialog, int id) {
+				SMSMassivo.this.finish();
+			}
+		});
+		builder.create().show();
 	}
 
 	@Override
@@ -105,7 +124,8 @@ public class SMSMassivo extends Activity {
 		Log.i(TAG, "Destruindo Atividade...");
 		super.onDestroy();
 
-		dailyController.close();
+		if (dailyController != null)
+			dailyController.close();
 
 		EnvironmentAccessor.getInstance().remove(this);
 		Log.i(TAG, "Atividade destru’da");
@@ -125,12 +145,12 @@ public class SMSMassivo extends Activity {
 			sentAllBtn.requestFocus();
 			sentAllBtn.requestFocusFromTouch();
 		}
-		
-		totalOfSlavesLbl.setText(getText(R.string.totalOfSlaves) + ": "+totalOfSlaves.getProgress());
-		
+
+		totalOfSlavesLbl.setText(getText(R.string.totalOfSlaves) + ": " + totalOfSlaves.getProgress());
+
 		smsSent.setMax(getTotalOfMessagesToSend());
 		smsSent.setProgress(0);
-		smsSent.setProgress(dailyController.getTotalSent());
+		smsSent.setProgress(dailyController == null ? 0 : dailyController.getTotalSent());
 	}
 
 	public int getTotalOfMessagesToSend() {
@@ -166,14 +186,14 @@ public class SMSMassivo extends Activity {
 		Log.d(TAG, "N‹o foi poss’vel obter o valor da toler‰ncia a falhas. Utilizando o valor padr‹o: " + failureTolerance);
 		return failureTolerance;
 	}
-	
+
 	public int getTotalOfSlaves() {
 		int totalOfSlaves = 0;
-			totalOfSlaves = this.totalOfSlaves.getProgress();
-			if (totalOfSlaves > 0) {
-				Log.d(TAG, "Total de processos para o envio de SMS: " + totalOfSlaves);
-				return totalOfSlaves;
-			}
+		totalOfSlaves = this.totalOfSlaves.getProgress();
+		if (totalOfSlaves > 0) {
+			Log.d(TAG, "Total de processos para o envio de SMS: " + totalOfSlaves);
+			return totalOfSlaves;
+		}
 		totalOfSlaves = config.getTotalOfSlaves();
 		Log.d(TAG, "N‹o foi poss’vel obter o total de processos. Utilizando o valor padr‹o: " + totalOfSlaves);
 		return totalOfSlaves;
@@ -192,7 +212,7 @@ public class SMSMassivo extends Activity {
 		}
 		return phone;
 	}
-	
+
 	public ConfigController getConfig() {
 		return config;
 	}

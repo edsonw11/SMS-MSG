@@ -11,8 +11,7 @@ import android.content.Context;
 public class DailyController {
 	private static Map<String, DailyController> controllers = new HashMap<String, DailyController>();;
 
-	public static DailyController getInstance(Context c, String simCard,
-			String phone) {
+	public static DailyController getInstance(Context c, String simCard, String phone) {
 		String key = simCard + '|' + phone;
 		DailyController dc = controllers.get(key);
 
@@ -29,8 +28,7 @@ public class DailyController {
 
 	private DailyController(Context c, String simCard, String phone) {
 		historyDao = new HistoryDAO(c);
-		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(),
-				simCard, phone));
+		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
 	}
 
 	public synchronized int getTotalSent() {
@@ -83,9 +81,9 @@ public class DailyController {
 
 	public synchronized void close() {
 		historyDao.close();
-		for(String key : controllers.keySet()){
+		for (String key : controllers.keySet()) {
 			DailyController dc = controllers.get(key);
-			if(dc.equals(this)){
+			if (dc.equals(this)) {
 				controllers.remove(key);
 				return;
 			}
