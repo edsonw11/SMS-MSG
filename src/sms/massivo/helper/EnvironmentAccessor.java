@@ -4,15 +4,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import sms.massivo.helper.db.controller.ConfigController;
-
 import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Vibrator;
 import android.telephony.TelephonyManager;
 import android.util.Log;

@@ -2,8 +2,9 @@ package sms.massivo.helper.db.table;
 
 public enum config implements DbTable {
 	phone("TEXT"),
-	failureTolerance("INTEGER"),
+	failure_tolerance("INTEGER"),
 	total_messages("INTEGER"),
+	total_of_slaves("INTEGER"),
 	is_running("INTEGER"),
 	stopped_by_user("INTEGER"),;
 	private String type;

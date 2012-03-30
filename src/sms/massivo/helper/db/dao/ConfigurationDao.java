@@ -22,7 +22,7 @@ public class ConfigurationDao extends Database<Configuration, config> {
 	public ContentValues toContentValues(Configuration bean){
 		ContentValues values = new ContentValues();
 		values.put(config.phone.name(), bean.getPhone());
-		values.put(config.failureTolerance.name(), bean.getFailureTolerance());
+		values.put(config.failure_tolerance.name(), bean.getFailureTolerance());
 		values.put(config.total_messages.name(), bean.getTotalOfMessagesToSend());
 		values.put(config.is_running.name(), bean.isRunning());
 		return values;
@@ -55,7 +55,7 @@ public class ConfigurationDao extends Database<Configuration, config> {
 			c = getReadableDatabase().query(tablename(), columns().split(", "), null, null, null, null, orderBy);
 			while (c.moveToNext()) {
 				Configuration result = new Configuration();
-				result.setFailureTolerance(getColumnInt(c, config.failureTolerance));
+				result.setFailureTolerance(getColumnInt(c, config.failure_tolerance));
 				result.setRunning(getColumnInt(c, config.is_running));
 				result.setPhone(getColumnString(c, config.phone));
 				result.setTotalOfMessagesToSend(getColumnInt(c, config.total_messages));

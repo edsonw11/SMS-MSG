@@ -1,7 +1,6 @@
 package sms.massivo.view.main;
 
 import sms.massivo.R;
-import sms.massivo.task.sender.SMSSender;
 import sms.massivo.task.sender.SMSSenderParams;
 import sms.massivo.view.report.Report;
 import android.content.Intent;
@@ -10,9 +9,12 @@ import android.view.MenuItem;
 import android.view.MenuItem.OnMenuItemClickListener;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.view.View.OnFocusChangeListener;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.Toast;
 
-public class SMSMassivoEvents implements OnClickListener, OnMenuItemClickListener {
+public class SMSMassivoEvents implements OnClickListener, OnMenuItemClickListener, OnSeekBarChangeListener, OnFocusChangeListener {
 	public final static String TAG = "SMSMassivoEvents";
 
 	private final SMSMassivo smsMassivo;
@@ -28,15 +30,17 @@ public class SMSMassivoEvents implements OnClickListener, OnMenuItemClickListene
 		Log.i(TAG, "Acionado comando para enviar todos os SMS");
 		int totalOfMessages = smsMassivo.getTotalOfMessagesToSend();
 		int failureTolerance = smsMassivo.getTotalFailureTolerance();
+		int totalOfSlaves = smsMassivo.getTotalOfSlaves();
+		
 		String phone = smsMassivo.getPhone();
 
 		SMSSenderParams params = new SMSSenderParams();
 		params.setPhone(phone);
 		params.setTotalOfMessages(totalOfMessages);
 		params.setFailureTolerance(failureTolerance);
+		params.setTotalOfSlaves(totalOfSlaves);
 
-		SMSSender sender = new SMSSender(smsMassivo);
-		sender.execute(params);
+		smsMassivo.getManager().execute(params);
 
 		Log.i(TAG, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), totalOfMessages));
 		Toast.makeText(smsMassivo, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), totalOfMessages), Toast.LENGTH_SHORT).show();
@@ -83,5 +87,27 @@ public class SMSMassivoEvents implements OnClickListener, OnMenuItemClickListene
 			onClickCancel();
 		}
 		return true; // prevents bubble effect
+	}
+
+	@Override
+	public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+		if (fromUser && progress < 1)
+			seekBar.setProgress(1);
+		smsMassivo.updateScreen();
+	}
+
+	@Override
+	public void onStartTrackingTouch(SeekBar seekBar) {
+	}
+
+	@Override
+	public void onStopTrackingTouch(SeekBar seekBar) {
+	}
+
+	@Override
+	public void onFocusChange(View v, boolean hasFocus) {
+		if(!hasFocus && v.getId() == R.main.totalOfSendMessagesETN){
+			smsMassivo.updateScreen();
+		}
 	}
 }

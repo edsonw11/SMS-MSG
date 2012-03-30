@@ -21,5 +21,7 @@
     <string name="phoneToSend">Telefone de destino</string>
     <string name="totalFailureTolerance">Tolerância a falhas</string>
     <string name="cancelAllBtn">Cancelar</string>
+    <string name="totalOfSlaves">Processos</string>
+    <string name="icon_report_description">i</string>
 
 </resources>

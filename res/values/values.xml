@@ -4,6 +4,7 @@
 
     <item name="totalOfMessagesToSend" format="integer" type="defaultValue">300</item>
     <item name="totalFailureTolerance" format="integer" type="defaultValue">3</item>
+    <item name="totalOfSlaves" format="integer" type="defaultValue">4</item>
     <item name="phoneToSend" format="string" type="defaultValue">+551160470001</item>
     
     <item name="task" format="integer" type="menuGroup">91</item>
@@ -17,5 +18,5 @@
 
     <dimen name="marginBetweenVerticalComponents">5dp</dimen>
     <dimen name="marginDefault">5dp</dimen>
-
+    
 </resources>

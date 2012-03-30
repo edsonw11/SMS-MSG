@@ -2,65 +2,80 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    android:gravity="center_vertical" >
+    android:gravity="center_vertical"
+    android:orientation="vertical"
+    android:padding="@dimen/marginDefault" >
 
-    <LinearLayout
+    <TextView
+        android:id="@+main/phoneToSendLbl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/marginBetweenVerticalComponents"
+        android:text="@string/phoneToSend"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <EditText
+        android:id="@+main/phoneToSendETN"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="@dimen/marginDefault" >
+        android:inputType="numberDecimal" />
 
-        <TextView
-            android:id="@+main/phoneToSendLbl"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingTop="@dimen/marginBetweenVerticalComponents"
-            android:text="@string/phoneToSend"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+    <TextView
+        android:id="@+main/totalFailureToleranceLbl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/marginBetweenVerticalComponents"
+        android:text="@string/totalFailureTolerance"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
-        <EditText
-            android:id="@+main/phoneToSendETN"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:inputType="numberDecimal" />
+    <EditText
+        android:id="@+main/totalFailureToleranceETN"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal" />
 
-        <TextView
-            android:id="@+main/totalFailureToleranceLbl"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingTop="@dimen/marginBetweenVerticalComponents"
-            android:text="@string/totalFailureTolerance"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+    <TextView
+        android:id="@+main/totalOfSlavesLbl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/marginBetweenVerticalComponents"
+        android:text="@string/totalOfSlaves"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
-        <EditText
-            android:id="@+main/totalFailureToleranceETN"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:inputType="numberDecimal" />
+    <SeekBar
+        android:id="@+main/totalOfSlavesSKB"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:max="10" android:paddingLeft="8dp" android:paddingRight="8dp" android:progress="1"/>
 
-        <TextView
-            android:id="@+main/totalOfSendMessagesLbl"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingTop="@dimen/marginBetweenVerticalComponents"
-            android:text="@string/totalOfSendMessages"
-            android:textAppearance="?android:attr/textAppearanceMedium" />
+    <TextView
+        android:id="@+main/totalOfSendMessagesLbl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/marginBetweenVerticalComponents"
+        android:text="@string/totalOfSendMessages"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
 
-        <EditText
-            android:id="@+main/totalOfSendMessagesETN"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:inputType="numberDecimal" >
+    <EditText
+        android:id="@+main/totalOfSendMessagesETN"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal" >
 
-            <requestFocus />
-        </EditText>
+        <requestFocus />
+    </EditText>
 
-        <Button
-            android:id="@+main/sendAllBtn"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/marginBetweenVerticalComponents"
-            android:text="@string/sendAllBtn" />
-    </LinearLayout>
+    <Button
+        android:id="@+main/sendAllBtn"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/marginBetweenVerticalComponents"
+        android:text="@string/sendAllBtn" />
+
+    <ProgressBar
+        android:id="@+main/smsSentPRB"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content" android:indeterminate="false"/>
 
 </LinearLayout>

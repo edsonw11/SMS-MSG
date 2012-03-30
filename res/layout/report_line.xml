@@ -3,22 +3,15 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="horizontal" >
-    
-    <ImageView
-        android:id="@+line_report/icon"
-        android:layout_width="16px"
-        android:layout_height="16px"
-        android:layout_marginLeft="4px"
-        android:layout_marginRight="10px"
-        android:layout_marginTop="4px"
-        android:src="@android:drawable/ic_input_get" >
-    </ImageView>
 
     <TextView
+        android:drawableLeft="@android:drawable/ic_input_get"
+        android:drawablePadding="5dp"
         android:id="@+line_report/label"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:text="@+line_report/label"
-        android:textSize="15px" >
+        android:gravity="bottom"
+        android:textSize="16dp" >
     </TextView>
 </LinearLayout>

@@ -49,6 +49,11 @@ public class ConfigController {
 		configDao.update(config);
 	}
 
+	public synchronized void setTotalOfSlaves(int totalOfSlaves) {
+		config.setTotalOfSlaves(totalOfSlaves);
+		configDao.update(config);
+	}
+
 	public synchronized boolean isRunning() {
 		return config.isRunning();
 	}
@@ -66,11 +71,14 @@ public class ConfigController {
 
 	public synchronized void markAsStoppedByUser() {
 		config.setStoppedByUser(1);
-		config.setRunning(0);
-		configDao.update(config);
+		markAsStopped();
 	}
 
 	public synchronized boolean isStoppedByUser() {
 		return config.isStoppedByUser();
+	}
+
+	public int getTotalOfSlaves() {
+		return config.getTotalOfSlaves();
 	}
 }
