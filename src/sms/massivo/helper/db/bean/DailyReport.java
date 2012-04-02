@@ -1,9 +1,14 @@
 package sms.massivo.helper.db.bean;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import android.util.Log;
+
 public class DailyReport {
+	private static transient final String TAG = "DailyReport";
 	private static transient final String DATE_FORMAT = "yyyy-MM-dd";
 	private int canceled;
 	private String day;
@@ -169,5 +174,27 @@ public class DailyReport {
 
 	public void incTotalSent() {
 		this.totalSent++;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("DailyReport[");
+		for (Field f : DailyReport.class.getDeclaredFields()) {
+			if (Modifier.isStatic(f.getModifiers()))
+				continue;
+			f.setAccessible(true);
+			sb.append(f.getName()).append(": ");
+			try {
+				Object value = f.get(this);
+				sb.append(value);
+			} catch (Exception e) {
+				Log.w(TAG, e);
+			}
+			sb.append(", ");
+		}
+		sb.setLength(sb.length() - 2);
+		sb.append("]");
+		return sb.toString();
 	}
 }

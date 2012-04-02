@@ -38,7 +38,7 @@ public class SMSMassivo extends Activity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		Log.i(TAG, "Criando SMSMassivo...");
+		Log.i(TAG, "SMSMassivo.onCreate("+(savedInstanceState == null? "null":savedInstanceState.toString())+")");
 		setContentView(R.layout.main);
 
 		config = ConfigController.getInstance(this);
@@ -59,6 +59,7 @@ public class SMSMassivo extends Activity {
 		failureTolerance.setHint(R.defaultValue.totalFailureTolerance);
 
 		totalOfSlaves = (SeekBar) findViewById(R.main.totalOfSlavesSKB);
+		totalOfSlaves.setMax(getResources().getInteger(R.defaultValue.maxOfSlaves));
 		totalOfSlaves.setProgress(getResources().getInteger(R.defaultValue.totalOfSlaves));
 		totalOfSlaves.setOnSeekBarChangeListener(events);
 
@@ -116,12 +117,13 @@ public class SMSMassivo extends Activity {
 	@Override
 	protected void onResume() {
 		super.onResume();
+		Log.i(TAG, "SMSMassivo.onResume()");
 		updateScreen();
 	}
 
 	@Override
 	protected void onDestroy() {
-		Log.i(TAG, "Destruindo Atividade...");
+		Log.i(TAG, "SMSMassivo.onDestroy()");
 		super.onDestroy();
 
 		if (dailyController != null)
@@ -130,12 +132,25 @@ public class SMSMassivo extends Activity {
 		EnvironmentAccessor.getInstance().remove(this);
 		Log.i(TAG, "Atividade destru’da");
 	}
-
+	
+	@Override
+	protected void onPause() {
+		super.onPause();
+		Log.i(TAG, "SMSMassivo.onPause()");
+	}
+	
 	public void updateScreen() {
+		Log.v(TAG, "Atualizando informa›es da tela...");
 		boolean enabled = !config.isRunning();
 
 		totalOfSendMessages.setEnabled(enabled);
+		totalOfSendMessages.setHint(String.valueOf(config.getTotalOfMessagesToSend()));
+		totalOfSendMessages.setText("");
+		
 		failureTolerance.setEnabled(enabled);
+		failureTolerance.setHint(String.valueOf(config.getFailureTolerance()));
+		failureTolerance.setText("");
+		
 		totalOfSlaves.setEnabled(enabled);
 
 		if (enabled)
@@ -149,25 +164,25 @@ public class SMSMassivo extends Activity {
 		totalOfSlavesLbl.setText(getText(R.string.totalOfSlaves) + ": " + totalOfSlaves.getProgress());
 
 		smsSent.setMax(getTotalOfMessagesToSend());
+		Log.d(TAG, "PROGRESSO: "+ smsSent.getProgress() + " -> "+dailyController.getTotalSent());
 		smsSent.setProgress(0);
 		smsSent.setProgress(dailyController == null ? 0 : dailyController.getTotalSent());
 	}
 
 	public int getTotalOfMessagesToSend() {
-		int total = 0;
+		int totalOfMessagesToSend = 0;
 		try {
 			String totalToSendTxt = totalOfSendMessages.getText().toString();
-			total = Integer.valueOf(totalToSendTxt);
-			if (total > 0) {
-				Log.d(TAG, "Total de mensagens a enviar: " + total);
-				return total;
+			totalOfMessagesToSend = Integer.valueOf(totalToSendTxt);
+			if (totalOfMessagesToSend > 0) {
+				Log.v(TAG, "Total de mensagens a enviar: " + totalOfMessagesToSend);
+				return totalOfMessagesToSend;
 			}
 		} catch (Throwable t) {
-			Log.w(TAG, String.format("Erro na conver‹o do total de SMS a enviar [total:%d]", total), t);
 		}
-		total = config.getTotalOfMessagesToSend();
-		Log.d(TAG, "N‹o foi poss’vel obter o total de mensagens. Utilizando o total de mensagens padr‹o: " + total);
-		return total;
+		totalOfMessagesToSend = config.getTotalOfMessagesToSend();
+		Log.d(TAG, "N‹o foi poss’vel obter o total de mensagens. Utilizando o total de mensagens padr‹o: " + totalOfMessagesToSend);
+		return totalOfMessagesToSend;
 	}
 
 	public int getTotalFailureTolerance() {
@@ -176,11 +191,10 @@ public class SMSMassivo extends Activity {
 			String totalFailureToleranceTxt = this.failureTolerance.getText().toString();
 			failureTolerance = Integer.valueOf(totalFailureToleranceTxt);
 			if (failureTolerance > 0) {
-				Log.d(TAG, "Total de falhas permitidas antes de abortar o envio de SMS: " + failureTolerance);
+				Log.v(TAG, "Total de falhas permitidas antes de abortar o envio de SMS: " + failureTolerance);
 				return failureTolerance;
 			}
 		} catch (Throwable t) {
-			Log.w(TAG, String.format("Erro na conver‹o do valor de tolerancia a falhas [toleranciaFalhas:%d vez(es)]", failureTolerance), t);
 		}
 		failureTolerance = config.getFailureTolerance();
 		Log.d(TAG, "N‹o foi poss’vel obter o valor da toler‰ncia a falhas. Utilizando o valor padr‹o: " + failureTolerance);
@@ -191,7 +205,7 @@ public class SMSMassivo extends Activity {
 		int totalOfSlaves = 0;
 		totalOfSlaves = this.totalOfSlaves.getProgress();
 		if (totalOfSlaves > 0) {
-			Log.d(TAG, "Total de processos para o envio de SMS: " + totalOfSlaves);
+			Log.v(TAG, "Total de processos para o envio de SMS: " + totalOfSlaves);
 			return totalOfSlaves;
 		}
 		totalOfSlaves = config.getTotalOfSlaves();

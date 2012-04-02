@@ -25,56 +25,69 @@ public class DailyController {
 
 	private final HistoryDAO historyDao;
 	private DailyReport dailyReport;
+	private final String simCard;
+	private final String phone;
 
 	private DailyController(Context c, String simCard, String phone) {
+		this.simCard = simCard;
+		this.phone = phone;
 		historyDao = new HistoryDAO(c);
-		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
 	}
 
 	public synchronized int getTotalSent() {
+		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
 		return dailyReport.getTotalSent();
 	}
 
 	public synchronized int getTotalOfFailures() {
+		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
 		return dailyReport.getTotalOfFailures();
 	}
 
 	public synchronized void incTotalSent() {
+		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
 		dailyReport.incTotalSent();
 		historyDao.update(dailyReport);
 	}
 
 	public synchronized void incDelivery() {
+		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
 		dailyReport.incDelivery();
 		historyDao.update(dailyReport);
 	}
 
 	public synchronized void incCanceled() {
+		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
 		dailyReport.incCanceled();
 		historyDao.update(dailyReport);
 	}
 
 	public synchronized void incSendSuccessfully() {
+		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
 		dailyReport.incSendSuccessfully();
 		historyDao.update(dailyReport);
 	}
 
 	public synchronized void incGenericFailure() {
+		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
 		dailyReport.incGenericFailure();
 		historyDao.update(dailyReport);
 	}
 
 	public void incNoService() {
+		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
 		dailyReport.incNoService();
 		historyDao.update(dailyReport);
 	}
 
 	public synchronized void incNullPDU() {
+		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
 		dailyReport.incNullPDU();
 		historyDao.update(dailyReport);
 	}
 
 	public synchronized void incRadioOff() {
+		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
 		dailyReport.incRadioOff();
 		historyDao.update(dailyReport);
 	}

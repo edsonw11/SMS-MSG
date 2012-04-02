@@ -46,7 +46,9 @@
         android:id="@+main/totalOfSlavesSKB"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:max="10" android:paddingLeft="8dp" android:paddingRight="8dp" android:progress="1"/>
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:progress="1" />
 
     <TextView
         android:id="@+main/totalOfSendMessagesLbl"
@@ -76,6 +78,7 @@
         android:id="@+main/smsSentPRB"
         style="?android:attr/progressBarStyleHorizontal"
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content" android:indeterminate="false"/>
+        android:layout_height="wrap_content"
+        android:indeterminate="false" />
 
 </LinearLayout>

@@ -1,6 +1,7 @@
 package sms.massivo.helper.db;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import sms.massivo.helper.db.table.DbTable;
@@ -73,7 +74,7 @@ public abstract class Database<BeanType, DbTableType extends DbTable> extends SQ
 	}
 
 	public void update(BeanType bean, String whereClause, String[] whereParams) {
-		Log.i(TAG, String.format("Atualizando dados em %s[where '%s': params '%s']: %s", table.tablename(), whereClause, whereParams, bean));
+		Log.i(TAG, String.format("Atualizando dados em %s[where '%s': params '%s']: %s", table.tablename(), whereClause, Arrays.toString(whereParams), bean));
 		getWritableDatabase().update(table.tablename(), toContentValues(bean), whereClause, whereParams);
 	}
 

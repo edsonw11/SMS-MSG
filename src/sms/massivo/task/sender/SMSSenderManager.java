@@ -1,8 +1,10 @@
 package sms.massivo.task.sender;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import sms.massivo.R;
@@ -11,6 +13,7 @@ import sms.massivo.helper.NotificatorHelper;
 import sms.massivo.helper.db.controller.ConfigController;
 import sms.massivo.helper.db.controller.DailyController;
 import sms.massivo.view.main.SMSMassivo;
+import sms.massivo.view.report.Report;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -28,9 +31,10 @@ public class SMSSenderManager {
 	protected static final String SENT_SMS_INTENT = "SMS_SENT";
 	protected static final String DELIVERED_SMS_INTENT = "SMS_DELIVERED";
 
-	private final List<SMSSender> senders = new ArrayList<SMSSender>();
+	private final Map<Integer, SMSSender> senders = new HashMap<Integer, SMSSender>();
 	private final SMSMassivo smsMassivo;
 	private ConfigController config;
+	private String simCard;
 	private NotificatorHelper notificatorHelper;
 	private DailyController dailyController;
 	private int token = 0;
@@ -40,16 +44,11 @@ public class SMSSenderManager {
 	private Set<Integer> receiverSmsBroadcastReceivedIdCache = new HashSet<Integer>();
 
 	private int NOTIFICATION = R.notification.smsSenderNotificationId;
-	private SMSSenderParams params;
 
 	public SMSSenderManager(SMSMassivo smsMassivo) {
 		this.smsMassivo = smsMassivo;
 		config = smsMassivo.getConfig();
 		notificatorHelper = new NotificatorHelper(smsMassivo, NOTIFICATION);
-	}
-
-	protected SMSSenderParams getParams() {
-		return params;
 	}
 
 	private void load() {
@@ -59,23 +58,22 @@ public class SMSSenderManager {
 		}
 
 		Log.d(TAG, "Instanciando novos SMSSenders");
-		for (int i = 0; i < params.getTotalOfSlaves(); i++) {
+		for (int i = 0; i < config.getTotalOfSlaves(); i++) {
 			SMSSender sender = new SMSSender(i, this);
-			senders.add(sender);
+			senders.put(i, sender);
 		}
 	}
 
-	public void execute(SMSSenderParams params) {
+	public void execute() {
 		if (config.isRunning())
 			return;
 
-		this.params = params;
-
 		preExecution();
 
-		if (dailyController.getTotalSent() >= params.getTotalOfMessages()) {
+		if (dailyController.getTotalSent() >= config.getTotalOfMessagesToSend()) {
 			notify(R.string.progressDialogMessagesHasBeenSent, dailyController.getTotalSent());
-			cancel();
+			config.markAsStopped();
+			smsMassivo.updateScreen();
 			return;
 		}
 		token = dailyController.getTotalSent();
@@ -85,8 +83,7 @@ public class SMSSenderManager {
 		notify(R.string.sendSmsServiceStarted);
 
 		Monitor monitor = new Monitor();
-		for (SMSSender s : senders) {
-			s.setParams(params);
+		for (SMSSender s : senders.values()) {
 			monitor.add(s);
 		}
 
@@ -124,7 +121,7 @@ public class SMSSenderManager {
 
 				Log.i(TAG, "Marcando como finalizado com xito");
 				config.markAsStopped();
-				SMSSenderManager.this.notify(R.string.notificationSmsSentFinished, token, params.getPhone());
+				SMSSenderManager.this.notify(R.string.notificationSmsSentFinished, token, config.getPhone());
 			} finally {
 				posExecution();
 			}
@@ -163,15 +160,14 @@ public class SMSSenderManager {
 	}
 
 	private void preExecution() {
-		params.setSimCard(EnvironmentAccessor.getInstance().getSimCardNumber(smsMassivo));
-		Log.i(TAG, "Par‰metros recebidos: " + params);
+		simCard = EnvironmentAccessor.getInstance().getSimCardNumber(smsMassivo);
 
 		load();
 		clearCaches();
 		registerSentSMSContextListener();
 		registerReceiverSMSContextListener();
 
-		dailyController = DailyController.getInstance(smsMassivo, params.getSimCard(), params.getPhone());
+		dailyController = DailyController.getInstance(smsMassivo, simCard, config.getPhone());
 	}
 
 	private void clearCaches() {
@@ -202,9 +198,9 @@ public class SMSSenderManager {
 		smsMassivo.updateScreen();
 	}
 
-	protected int getToken(SMSSenderParams params) {
-		synchronized (params) {
-			if (token >= params.getTotalOfMessages()) {
+	protected int getToken() {
+		synchronized (config) {
+			if (token >= config.getTotalOfMessagesToSend()) {
 				return -1;
 			}
 			return token++;
@@ -222,7 +218,8 @@ public class SMSSenderManager {
 	protected void notify(int messageId, Object... messageParams) {
 		Log.i(TAG, "Atualizando notifica›es...");
 
-		Intent intentToCall = new Intent(smsMassivo, SMSMassivo.class);
+		Intent intentToCall = new Intent(smsMassivo, Report.class);
+		intentToCall.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
 		notificatorHelper.notify(android.R.drawable.ic_menu_upload, intentToCall, R.string.app_name, messageId, messageParams);
 
 		Log.i(TAG, "Notifica›es atualizadas");
@@ -287,6 +284,7 @@ public class SMSSenderManager {
 					}
 
 					int smsId = intent.getExtras().getInt("id");
+					Log.i(TAG, "BroadcastReceiver do SMS "+smsToken+" pelo SmsSender "+smsId);
 					dailyController.incTotalSent();
 
 					switch (getResultCode()) {
@@ -317,8 +315,8 @@ public class SMSSenderManager {
 					default:
 						Toast.makeText(context, "C—digo inesperado: " + getResultCode(), Toast.LENGTH_LONG);
 					}
-					if (dailyController.getTotalOfFailures() >= params.getFailureTolerance()) {
-						SMSSenderManager.this.notify(R.string.notificationSmsSenderAborted, token, params.getPhone(), dailyController.getTotalOfFailures());
+					if (dailyController.getTotalOfFailures() >= config.getFailureTolerance()) {
+						SMSSenderManager.this.notify(R.string.notificationSmsSenderAborted, token, config.getPhone(), dailyController.getTotalOfFailures());
 						config.markAsStopped();
 						return;
 					}
@@ -335,5 +333,9 @@ public class SMSSenderManager {
 
 	protected void toast(String text) {
 		Toast.makeText(smsMassivo, text, Toast.LENGTH_LONG).show();
+	}
+
+	protected ConfigController getConfig() {
+		return config;
 	}
 }

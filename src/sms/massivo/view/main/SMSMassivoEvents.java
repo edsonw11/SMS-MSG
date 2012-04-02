@@ -1,7 +1,7 @@
 package sms.massivo.view.main;
 
 import sms.massivo.R;
-import sms.massivo.task.sender.SMSSenderParams;
+import sms.massivo.helper.db.controller.ConfigController;
 import sms.massivo.view.report.Report;
 import android.content.Intent;
 import android.util.Log;
@@ -25,25 +25,19 @@ public class SMSMassivoEvents implements OnClickListener, OnMenuItemClickListene
 	}
 
 	private void onClickSendAll() {
-		if (smsMassivo.getConfig().isRunning())
+		ConfigController config = smsMassivo.getConfig();
+		if (config.isRunning())
 			return;
 		Log.i(TAG, "Acionado comando para enviar todos os SMS");
-		int totalOfMessages = smsMassivo.getTotalOfMessagesToSend();
-		int failureTolerance = smsMassivo.getTotalFailureTolerance();
-		int totalOfSlaves = smsMassivo.getTotalOfSlaves();
+		config.setTotalOfMessagesToSend(smsMassivo.getTotalOfMessagesToSend());
+		config.setFailureTolerance(smsMassivo.getTotalFailureTolerance());
+		config.setTotalOfSlaves(smsMassivo.getTotalOfSlaves());
+		config.setPhone(smsMassivo.getPhone());
 		
-		String phone = smsMassivo.getPhone();
-
-		SMSSenderParams params = new SMSSenderParams();
-		params.setPhone(phone);
-		params.setTotalOfMessages(totalOfMessages);
-		params.setFailureTolerance(failureTolerance);
-		params.setTotalOfSlaves(totalOfSlaves);
-
-		smsMassivo.getManager().execute(params);
-
-		Log.i(TAG, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), totalOfMessages));
-		Toast.makeText(smsMassivo, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), totalOfMessages), Toast.LENGTH_SHORT).show();
+		Log.i(TAG, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), config.getTotalOfMessagesToSend()));
+		Toast.makeText(smsMassivo, String.format(smsMassivo.getString(R.string.smsMassivoEvents_log_smsSenderStarted), config.getTotalOfMessagesToSend()), Toast.LENGTH_SHORT).show();
+		
+		smsMassivo.getManager().execute();
 
 		smsMassivo.updateScreen();
 	}
