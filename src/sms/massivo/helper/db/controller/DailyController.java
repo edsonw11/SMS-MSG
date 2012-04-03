@@ -50,16 +50,11 @@ public class DailyController {
 		historyDao.update(dailyReport);
 	}
 
-	public synchronized void incDelivery() {
+	public synchronized int nextCounter() {
 		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
-		dailyReport.incDelivery();
+		int counter = dailyReport.nextCounter();
 		historyDao.update(dailyReport);
-	}
-
-	public synchronized void incCanceled() {
-		dailyReport = historyDao.getOrCreate(new DailyReport(new Date(), simCard, phone));
-		dailyReport.incCanceled();
-		historyDao.update(dailyReport);
+		return counter;
 	}
 
 	public synchronized void incSendSuccessfully() {

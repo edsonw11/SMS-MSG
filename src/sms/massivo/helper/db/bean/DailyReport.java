@@ -10,9 +10,8 @@ import android.util.Log;
 public class DailyReport {
 	private static transient final String TAG = "DailyReport";
 	private static transient final String DATE_FORMAT = "yyyy-MM-dd";
-	private int canceled;
 	private String day;
-	private int delivery;
+	private int counter;
 	private String fromSim;
 	private int genericFailure;
 	private int noService;
@@ -42,16 +41,12 @@ public class DailyReport {
 		day = new SimpleDateFormat(DATE_FORMAT).format(dt);
 	}
 
-	public int getCanceled() {
-		return canceled;
-	}
-
 	public String getDay() {
 		return day;
 	}
 
-	public int getDelivery() {
-		return delivery;
+	public int getCounter() {
+		return counter;
 	}
 
 	public String getFromSim() {
@@ -86,15 +81,9 @@ public class DailyReport {
 		return totalSent;
 	}
 
-	public void incCanceled() {
+	public int nextCounter() {
 		synchronized (this) {
-			this.canceled++;
-		}
-	}
-
-	public void incDelivery() {
-		synchronized (this) {
-			this.delivery++;
+			return this.counter++;
 		}
 	}
 
@@ -128,16 +117,12 @@ public class DailyReport {
 		}
 	}
 
-	public void setCanceled(int canceled) {
-		this.canceled = canceled;
-	}
-
 	public void setDay(String day) {
 		this.day = day;
 	}
 
-	public void setDelivery(int delivery) {
-		this.delivery = delivery;
+	public void setCounter(int counter) {
+		this.counter = counter;
 	}
 
 	public void setFromSim(String fromSim) {

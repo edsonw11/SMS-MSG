@@ -9,8 +9,7 @@ public enum historic implements DbTable {
 	no_service("INTEGER"),
 	null_pdu("INTEGER"),
 	radio_off("INTEGER"),
-	delivery("INTEGER"),
-	canceled("INTEGER"),
+	counter("INTEGER"),
 	total_sent("INTEGER");
 	private String type;
 

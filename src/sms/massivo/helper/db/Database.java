@@ -16,7 +16,7 @@ import android.util.Log;
 public abstract class Database<BeanType, DbTableType extends DbTable> extends SQLiteOpenHelper {
 	private static final String TAG = "Database";
 	public static final String DB_NAME = "SMSMassivo";
-	public static final int DB_VERSION = 10;
+	public static final int DB_VERSION = 11;
 
 	private static final List<Class<? extends DbTable>> tables = new ArrayList<Class<? extends DbTable>>();
 	private final DbTable table;

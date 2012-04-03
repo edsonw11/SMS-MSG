@@ -60,7 +60,7 @@ public class SMSMassivo extends Activity {
 
 		totalOfSlaves = (SeekBar) findViewById(R.main.totalOfSlavesSKB);
 		totalOfSlaves.setMax(getResources().getInteger(R.defaultValue.maxOfSlaves));
-		totalOfSlaves.setProgress(getResources().getInteger(R.defaultValue.totalOfSlaves));
+		totalOfSlaves.setProgress(config.getTotalOfSlaves());
 		totalOfSlaves.setOnSeekBarChangeListener(events);
 
 		totalOfSlavesLbl = (TextView) findViewById(R.main.totalOfSlavesLbl);
@@ -143,12 +143,22 @@ public class SMSMassivo extends Activity {
 		Log.v(TAG, "Atualizando informa›es da tela...");
 		boolean enabled = !config.isRunning();
 
+		String valueToSend = totalOfSendMessages.getText().toString();
+		if(valueToSend.length() == 0){
+			valueToSend = String.valueOf(config.getTotalOfMessagesToSend());
+		}
+		
 		totalOfSendMessages.setEnabled(enabled);
-		totalOfSendMessages.setHint(String.valueOf(config.getTotalOfMessagesToSend()));
+		totalOfSendMessages.setHint(valueToSend);
 		totalOfSendMessages.setText("");
 		
+		
+		String failures = failureTolerance.getText().toString();
+		if(failures.length() == 0){
+			failures = String.valueOf(config.getFailureTolerance());
+		}
 		failureTolerance.setEnabled(enabled);
-		failureTolerance.setHint(String.valueOf(config.getFailureTolerance()));
+		failureTolerance.setHint(failures);
 		failureTolerance.setText("");
 		
 		totalOfSlaves.setEnabled(enabled);
@@ -173,6 +183,9 @@ public class SMSMassivo extends Activity {
 		int totalOfMessagesToSend = 0;
 		try {
 			String totalToSendTxt = totalOfSendMessages.getText().toString();
+			if(totalToSendTxt.length() == 0){
+				totalToSendTxt = totalOfSendMessages.getHint().toString();
+			}
 			totalOfMessagesToSend = Integer.valueOf(totalToSendTxt);
 			if (totalOfMessagesToSend > 0) {
 				Log.v(TAG, "Total de mensagens a enviar: " + totalOfMessagesToSend);
@@ -189,6 +202,9 @@ public class SMSMassivo extends Activity {
 		int failureTolerance = 0;
 		try {
 			String totalFailureToleranceTxt = this.failureTolerance.getText().toString();
+			if(totalFailureToleranceTxt.length() == 0){
+				totalFailureToleranceTxt = this.failureTolerance.getHint().toString();
+			}
 			failureTolerance = Integer.valueOf(totalFailureToleranceTxt);
 			if (failureTolerance > 0) {
 				Log.v(TAG, "Total de falhas permitidas antes de abortar o envio de SMS: " + failureTolerance);

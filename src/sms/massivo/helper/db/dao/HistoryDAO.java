@@ -29,8 +29,7 @@ public class HistoryDAO extends Database<DailyReport, historic> {
 			values.put(historic.from_sim.name(), bean.getFromSim());
 		if (bean.getToPhone() != null)
 			values.put(historic.to_phone.name(), bean.getToPhone());
-		values.put(historic.delivery.name(), bean.getDelivery());
-		values.put(historic.canceled.name(), bean.getCanceled());
+		values.put(historic.counter.name(), bean.getCounter());
 		values.put(historic.generic_failure.name(), bean.getGenericFailure());
 		values.put(historic.no_service.name(), bean.getNoService());
 		values.put(historic.null_pdu.name(), bean.getNullPDU());
@@ -60,8 +59,7 @@ public class HistoryDAO extends Database<DailyReport, historic> {
 			c = getReadableDatabase().query(tablename(), columns().split(", "), whereClause, whereValues, null, null, orderBy);
 			while (c.moveToNext()) {
 				DailyReport result = new DailyReport(getColumnString(c, historic.day), mySimCardNumber, getColumnString(c, historic.to_phone));
-				result.setCanceled(getColumnInt(c, historic.canceled));
-				result.setDelivery(getColumnInt(c, historic.delivery));
+				result.setCounter(getColumnInt(c, historic.counter));
 				result.setGenericFailure(getColumnInt(c, historic.generic_failure));
 				result.setNoService(getColumnInt(c, historic.no_service));
 				result.setNullPDU(getColumnInt(c, historic.null_pdu));

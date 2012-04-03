@@ -47,8 +47,8 @@ public class SMSSender implements Runnable {
 	protected void sendSmsInterator() {
 		String text = null;
 		int token = manager.getToken();
-		if (token >= 0) {
-			token++;
+		if (manager.hasMoreSmsToSend()) {
+//			token++;
 			if (!manager.isRunning()) {
 				Log.i(TAG,manager.format(R.string.notificationSmsSenderCanceled, token, config.getPhone()));
 				manager.notify(R.string.notificationSmsSenderCanceled, token, config.getPhone());
@@ -71,11 +71,18 @@ public class SMSSender implements Runnable {
 		Log.i(TAG, String.format("Enviando SMS %s para %s: '%s'", token, config.getPhone(), message));
 
 		PendingIntent sentPI = manager.getSentSmsIntent(getId(), token);
-		PendingIntent deliveredPI = manager.getDeliveredSmsIntent(getId(), token);
 
 		try {
 			SmsManager sms = SmsManager.getDefault();
-			sms.sendTextMessage(config.getPhone(), null, message, sentPI, deliveredPI);
+			
+			//FIXME remover....
+			try {
+				Thread.sleep((long)(Math.random() * 5000));
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			sms.sendTextMessage(config.getPhone(), null, message, sentPI, null);
 		} catch (IllegalArgumentException e) {
 			String text = String.format("%s [destinationAddress: %s, text: %s]", config.getPhone(), message);
 			Log.e(TAG, text, e);

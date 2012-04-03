@@ -83,6 +83,7 @@ public class SMSSenderManager {
 		notify(R.string.sendSmsServiceStarted);
 
 		Monitor monitor = new Monitor();
+		senders.clear();
 		for (SMSSender s : senders.values()) {
 			monitor.add(s);
 		}
@@ -134,7 +135,6 @@ public class SMSSenderManager {
 			dailyController.close();
 		}
 
-		unregisterReceiverSMSContextListener();
 		unregisterSentSMSContextListener();
 
 		Log.i(TAG, "Alertando tarefa finalizada via som...");
@@ -165,7 +165,6 @@ public class SMSSenderManager {
 		load();
 		clearCaches();
 		registerSentSMSContextListener();
-		registerReceiverSMSContextListener();
 
 		dailyController = DailyController.getInstance(smsMassivo, simCard, config.getPhone());
 	}
@@ -184,14 +183,6 @@ public class SMSSenderManager {
 		}
 	}
 
-	private void unregisterReceiverSMSContextListener() {
-		if (deliveryBroadcastReceiver != null) {
-			Log.d(TAG, "Removendo registro de callback de entrega de SMS...");
-			smsMassivo.unregisterReceiver(deliveryBroadcastReceiver);
-			deliveryBroadcastReceiver = null;
-		}
-	}
-
 	public void cancel() {
 		Log.i(TAG, "Envio de SMS cancelado pelo usuário");
 		config.markAsStoppedByUser();
@@ -199,12 +190,7 @@ public class SMSSenderManager {
 	}
 
 	protected int getToken() {
-		synchronized (config) {
-			if (token >= config.getTotalOfMessagesToSend()) {
-				return -1;
-			}
-			return token++;
-		}
+		return dailyController.nextCounter();
 	}
 
 	public boolean isRunning() {
@@ -225,49 +211,12 @@ public class SMSSenderManager {
 		Log.i(TAG, "Notificações atualizadas");
 	}
 
-	private void registerReceiverSMSContextListener() {
-		if (deliveryBroadcastReceiver == null) {
-			Log.d(TAG, "Registrando callback de entrega de SMS...");
-			deliveryBroadcastReceiver = new BroadcastReceiver() {
-				@Override
-				public void onReceive(Context context, Intent intent) {
-					int smsId = intent.getExtras().getInt("id");
-					if (receiverSmsBroadcastReceivedIdCache.contains(smsId)) {
-						return;
-					} else {
-						receiverSmsBroadcastReceivedIdCache.add(smsId);
-					}
-					switch (getResultCode()) {
-					case Activity.RESULT_OK:
-						Log.i(TAG, "SMS entregue");
-						dailyController.incDelivery();
-						break;
-					case Activity.RESULT_CANCELED:
-						Log.e(TAG, "SMS não entregue");
-						Toast.makeText(context, "SMS not delivered", Toast.LENGTH_SHORT).show();
-						dailyController.incCanceled();
-						break;
-					}
-				}
-			};
-		}
-		smsMassivo.registerReceiver(deliveryBroadcastReceiver, new IntentFilter(DELIVERED_SMS_INTENT));
-	}
-
 	protected PendingIntent getSentSmsIntent(int id, int token) {
 		Intent sentSmsIntent = new Intent(SMSSenderManager.SENT_SMS_INTENT);
 		sentSmsIntent.putExtra("id", id);
 		sentSmsIntent.putExtra("token", token);
 		PendingIntent sentPI = PendingIntent.getBroadcast(smsMassivo, id, sentSmsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 		return sentPI;
-	}
-
-	protected PendingIntent getDeliveredSmsIntent(int id, int token) {
-		Intent deliveredSmsIntent = new Intent(SMSSenderManager.DELIVERED_SMS_INTENT);
-		deliveredSmsIntent.putExtra("id", id);
-		deliveredSmsIntent.putExtra("token", token);
-		PendingIntent deliveredPI = PendingIntent.getBroadcast(smsMassivo, id << 2, deliveredSmsIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		return deliveredPI;
 	}
 
 	private void registerSentSMSContextListener() {
@@ -337,5 +286,9 @@ public class SMSSenderManager {
 
 	protected ConfigController getConfig() {
 		return config;
+	}
+
+	public boolean hasMoreSmsToSend() {
+		return config.getTotalOfMessagesToSend() >= dailyController.getTotalSent();
 	}
 }
